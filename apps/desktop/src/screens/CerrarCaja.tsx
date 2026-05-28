@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos, parseCentavos } from '../lib/money'
@@ -67,7 +68,7 @@ export default function CerrarCaja({ onCancelar }: Props) {
       <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-lg border border-slate-700 shadow-2xl overflow-y-auto max-h-[90vh]">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white">Cierre de caja</h2>
-          <button onClick={onCancelar} className="text-slate-400 hover:text-white text-2xl cursor-pointer">✕</button>
+          <button onClick={onCancelar} className="text-slate-400 hover:text-white cursor-pointer"><X size={20} /></button>
         </div>
 
         {/* Resumen del día */}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import type { Producto, Stock } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 
@@ -21,7 +22,7 @@ export default function StockAlerts() {
                     rounded-lg text-amber-300 text-xs cursor-default"
          title={bajoStock.map(b => `${b.producto.descripcion}: ${b.stock.cantidad} u.`).join('\n')}
     >
-      <span>⚠️</span>
+      <AlertTriangle size={14} />
       <span className="font-medium">
         {bajoStock.length} producto{bajoStock.length !== 1 ? 's' : ''} con stock bajo
       </span>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { X, Banknote, CreditCard, QrCode, CheckCircle } from 'lucide-react'
 import type { MedioPago, Venta, VentaItem } from '@kioscapp/shared'
 import { useCartStore } from '../store/cartStore'
 import { useCajaStore } from '../store/cajaStore'
@@ -10,11 +11,12 @@ interface Props {
   onSuccess: () => void
 }
 
-const MEDIOS: { id: MedioPago; label: string; icon: string }[] = [
-  { id: 'efectivo', label: 'Efectivo', icon: '💵' },
-  { id: 'debito', label: 'Débito', icon: '💳' },
-  { id: 'credito', label: 'Crédito', icon: '💳' },
-  { id: 'qr_mercado_pago', label: 'QR / MP', icon: '📱' },
+import type { LucideIcon } from 'lucide-react'
+const MEDIOS: { id: MedioPago; label: string; Icon: LucideIcon }[] = [
+  { id: 'efectivo',        label: 'Efectivo', Icon: Banknote    },
+  { id: 'debito',          label: 'Débito',   Icon: CreditCard  },
+  { id: 'credito',         label: 'Crédito',  Icon: CreditCard  },
+  { id: 'qr_mercado_pago', label: 'QR / MP',  Icon: QrCode      },
 ]
 
 export default function PaymentModal({ onClose, onSuccess }: Props) {
@@ -105,9 +107,9 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
           <h2 className="text-xl font-bold text-white">Cobro</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white text-2xl cursor-pointer"
+            className="text-slate-400 hover:text-white cursor-pointer"
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 
@@ -133,7 +135,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
                             : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-slate-500'
                           }`}
             >
-              <span>{m.icon}</span>
+              <m.Icon size={16} />
               {m.label}
             </button>
           ))}
@@ -199,7 +201,9 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
                        disabled:opacity-40 text-white font-bold
                        cursor-pointer transition-colors"
           >
-            {procesando ? 'Procesando…' : '✓ Confirmar'}
+            {procesando
+              ? 'Procesando…'
+              : <span className="flex items-center gap-1.5 justify-center"><CheckCircle size={16} /> Confirmar</span>}
           </button>
         </div>
       </div>

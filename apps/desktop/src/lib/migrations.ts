@@ -101,4 +101,23 @@ export const migrations = [
       CREATE INDEX IF NOT EXISTS idx_movimientos_caja   ON movimientos_caja(caja_id);
     `,
   },
+  {
+    description: 'Tabla proveedores — Fase 2',
+    sql: `
+      CREATE TABLE IF NOT EXISTS proveedores (
+        id           TEXT PRIMARY KEY,
+        nombre       TEXT NOT NULL,
+        telefono     TEXT,
+        email        TEXT,
+        notas        TEXT,
+        activo       INTEGER NOT NULL DEFAULT 1,
+        created_at   TEXT NOT NULL,
+        updated_at   TEXT NOT NULL,
+        local_id     TEXT NOT NULL,
+        sync_status  TEXT NOT NULL DEFAULT 'pending',
+        deleted_at   TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_proveedores_activo ON proveedores(activo);
+    `,
+  },
 ]

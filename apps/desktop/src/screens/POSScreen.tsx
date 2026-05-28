@@ -1,19 +1,18 @@
 import { useState } from 'react'
+import { CheckCircle } from 'lucide-react'
 import { useCartStore } from '../store/cartStore'
 import { useCajaStore } from '../store/cajaStore'
-import BarcodeInput from '../components/BarcodeInput'
+import SearchInput from '../components/SearchInput'
 import ProductGrid from '../components/ProductGrid'
 import Cart from '../components/Cart'
 import PaymentModal from '../components/PaymentModal'
-import CerrarCaja from './CerrarCaja'
-import StockAlerts from '../components/StockAlerts'
 import { formatCentavos } from '../lib/money'
 
 export default function POSScreen() {
   const { cajaActiva } = useCajaStore()
   const { items, total, clear } = useCartStore()
+  const [filtro, setFiltro] = useState('')
   const [showPayment, setShowPayment] = useState(false)
-  const [showCerrarCaja, setShowCerrarCaja] = useState(false)
   const [lastSale, setLastSale] = useState<string | null>(null)
 
   function handleSuccess() {
@@ -24,40 +23,26 @@ export default function POSScreen() {
   return (
     <div className="flex flex-col h-full bg-slate-950">
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="flex items-center justify-between px-4 py-2 bg-slate-900
-                         border-b border-slate-800 shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-bold text-white">🏪 KioscApp</span>
-          {cajaActiva && (
-            <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded-full">
-              Caja: {cajaActiva.id.slice(0, 8)}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <StockAlerts />
-          {lastSale && (
-            <span className="text-emerald-400 text-xs">✓ Venta {lastSale}</span>
-          )}
-          <button
-            onClick={() => setShowCerrarCaja(true)}
-            className="text-slate-400 hover:text-red-400 text-sm cursor-pointer
-                       transition-colors px-2 py-1 rounded-lg hover:bg-slate-800"
-          >
-            Cerrar caja
-          </button>
-        </div>
-      </header>
+      {/* ── Info bar ───────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 py-1.5 bg-slate-900
+                      border-b border-slate-800 shrink-0 text-xs">
+        <span className="text-slate-500">
+          Caja: <span className="text-slate-300">{cajaActiva?.id.slice(0, 8)}</span>
+        </span>
+        {lastSale && (
+          <span className="text-emerald-400 flex items-center gap-1">
+            <CheckCircle size={12} /> Venta registrada {lastSale}
+          </span>
+        )}
+      </div>
 
       {/* ── Body ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
 
-        {/* Panel izquierdo: scanner + grid de productos */}
+        {/* Panel izquierdo: búsqueda + grid de productos */}
         <div className="flex flex-col gap-3 p-4 flex-1 min-w-0 border-r border-slate-800">
-          <BarcodeInput />
-          <ProductGrid />
+          <SearchInput onFiltroChange={setFiltro} />
+          <ProductGrid filtro={filtro} />
         </div>
 
         {/* Panel derecho: carrito + botones de pago */}
@@ -94,15 +79,11 @@ export default function POSScreen() {
         </div>
       </div>
 
-      {/* Modales */}
       {showPayment && (
         <PaymentModal
           onClose={() => setShowPayment(false)}
           onSuccess={handleSuccess}
         />
-      )}
-      {showCerrarCaja && (
-        <CerrarCaja onCancelar={() => setShowCerrarCaja(false)} />
       )}
     </div>
   )

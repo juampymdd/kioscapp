@@ -11,17 +11,22 @@ import type { Producto } from '@kioscapp/shared'
 import type { Venta, VentaItem } from '@kioscapp/shared'
 import type { Caja, MovimientoCaja } from '@kioscapp/shared'
 import type { Stock } from '@kioscapp/shared'
+import type { Proveedor } from '@kioscapp/shared'
 
 export interface DataStore {
   // ── Productos ─────────────────────────────────────────────────────────────
   getProductos(): Promise<Producto[]>
+  getAllProductos(): Promise<Producto[]>
   getProductoPorBarcode(barcode: string): Promise<Producto | null>
   getProductoPorId(id: string): Promise<Producto | null>
+  upsertProducto(p: Producto): Promise<void>
 
   // ── Ventas (append-only) ──────────────────────────────────────────────────
   crearVenta(venta: Omit<Venta, 'sync_status'>): Promise<void>
   crearVentaItems(items: Omit<VentaItem, 'sync_status'>[]): Promise<void>
   getVentasDia(fechaISO: string): Promise<Venta[]>
+  getVentasRango(desde: string, hasta: string): Promise<Venta[]>
+  getVentaItemsPorVenta(ventaId: string): Promise<VentaItem[]>
 
   // ── Caja / Turno ──────────────────────────────────────────────────────────
   abrirCaja(caja: Omit<Caja, 'sync_status'>): Promise<void>
@@ -33,10 +38,16 @@ export interface DataStore {
   // ── Stock ─────────────────────────────────────────────────────────────────
   getStock(productoId: string): Promise<Stock | null>
   decrementarStock(productoId: string, cantidad: number): Promise<void>
-  /** Devuelve productos cuyo stock actual <= alerta_minimo. */
+  setStock(productoId: string, cantidad: number, alertaMinimo: number): Promise<void>
   getProductosBajoStock(): Promise<Array<{ producto: Producto; stock: Stock }>>
+  getProductosConStock(): Promise<Array<{ producto: Producto; stock: Stock | null }>>
 
-  // ── Sincronización (se implementa en Fase 3) ──────────────────────────────
+  // ── Proveedores ───────────────────────────────────────────────────────────
+  getProveedores(): Promise<Proveedor[]>
+  upsertProveedor(p: Proveedor): Promise<void>
+  deleteProveedor(id: string): Promise<void>
+
+  // ── Sincronización ────────────────────────────────────────────────────────
   getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>>
   marcarSincronizado(tabla: string, ids: string[]): Promise<void>
 }
