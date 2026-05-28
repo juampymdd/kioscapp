@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pos-bg: #020617;
+  --color-pos-surface: #0f172a;
+  --color-pos-card: #1e293b;
+  --color-pos-border: #334155;
+  --color-pos-text: #f8fafc;
+  --color-pos-muted: #94a3b8;
+  --color-pos-primary: #3b82f6;
+  --color-pos-primary-hover: #2563eb;
+  --color-pos-success: #22c55e;
+  --color-pos-danger: #ef4444;
+  --color-pos-warning: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: var(--color-pos-bg);
+  color: var(--color-pos-text);
+  font-family: system-ui, -apple-system, sans-serif;
+  user-select: none;
+}
+
+/* Scrollbar discreta para el tema oscuro */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-pos-border); border-radius: 3px; }
