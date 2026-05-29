@@ -26,6 +26,7 @@ export default function ConfigScreen({ onClose }: Props) {
   const [saved,          setSaved]          = useState(false)
   const [pullState,      setPullState]      = useState<PullState>('idle')
   const [pullMsg,        setPullMsg]        = useState('')
+  const credsDirty = useRef(false)
   const localIdRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -57,10 +58,7 @@ export default function ConfigScreen({ onClose }: Props) {
 
     try {
       const store = getDataStore()
-      const prevLocalId    = await store.getConfig('local_id')
-      const prevSyncSecret = await store.getConfig('sync_secret')
-      const credencialesCambiaron =
-        localId.trim() !== prevLocalId || syncSecret.trim() !== prevSyncSecret
+      const credencialesCambiaron = credsDirty.current
 
       await store.setConfig('local_id',        localId.trim())
       await store.setConfig('backend_url',     BACKEND_URL)
@@ -80,7 +78,12 @@ export default function ConfigScreen({ onClose }: Props) {
           setPullMsg(`Se importaron ${result.ventas} ventas (${result.items} ítems)`)
         } catch (e) {
           setPullState('error')
-          setPullMsg(e instanceof Error ? e.message : String(e))
+          const msg = e instanceof Error ? e.message : String(e)
+          setPullMsg(
+            msg === 'Failed to fetch' || msg.includes('fetch')
+              ? 'No se pudo conectar con el servidor. Las credenciales se guardaron correctamente — las ventas se importarán cuando haya conexión.'
+              : msg,
+          )
         }
       }
     } catch (e) {
@@ -107,14 +110,14 @@ export default function ConfigScreen({ onClose }: Props) {
         <div className="space-y-5">
           <div>
             <label className="text-slate-400 text-xs block mb-1.5">ID del local <span className="text-red-400">*</span></label>
-            <input ref={localIdRef} type="text" value={localId} onChange={e => setLocalId(e.target.value)}
+            <input ref={localIdRef} type="text" value={localId} onChange={e => { setLocalId(e.target.value); credsDirty.current = true }}
               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
               className={inputClass} />
           </div>
 
           <div>
             <label className="text-slate-400 text-xs block mb-1.5">Clave de sincronización <span className="text-red-400">*</span></label>
-            <input type="password" value={syncSecret} onChange={e => setSyncSecret(e.target.value)}
+            <input type="password" value={syncSecret} autoComplete="off" onChange={e => { setSyncSecret(e.target.value); credsDirty.current = true }}
               placeholder="••••••••••••••••"
               className={inputClass} />
           </div>
@@ -157,7 +160,7 @@ export default function ConfigScreen({ onClose }: Props) {
             <div className={`flex items-start gap-2 text-sm rounded-lg px-3 py-2 border
               ${pullState === 'pulling' ? 'bg-blue-950/30 border-blue-800 text-blue-300' :
                 pullState === 'done'    ? 'bg-emerald-950/30 border-emerald-800 text-emerald-300' :
-                                          'bg-red-950/30 border-red-900 text-red-400'}`}>
+                                          'bg-amber-950/30 border-amber-800 text-amber-300'}`}>
               {pullState === 'pulling'
                 ? <RefreshCw size={14} className="animate-spin mt-0.5 shrink-0" />
                 : <Download size={14} className="mt-0.5 shrink-0" />}

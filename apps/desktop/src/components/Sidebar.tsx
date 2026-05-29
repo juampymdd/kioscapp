@@ -1,10 +1,10 @@
 import {
-  ShoppingCart, Package, Boxes, Truck, BarChart2, LogOut, Store, Settings,
+  ShoppingCart, Package, Boxes, Truck, BarChart2, LogOut, Store, Settings, Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import type { Caja } from '@kioscapp/shared'
 
-export type ScreenId = 'pos' | 'productos' | 'stock' | 'proveedores' | 'reportes'
+export type ScreenId = 'pos' | 'productos' | 'stock' | 'proveedores' | 'ventas' | 'reportes'
 
 interface NavItem {
   id: ScreenId
@@ -13,10 +13,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'pos',         Icon: ShoppingCart, label: 'Ventas'      },
+  { id: 'pos',         Icon: ShoppingCart, label: 'Ventas POS'  },
   { id: 'productos',   Icon: Package,      label: 'Productos'   },
   { id: 'stock',       Icon: Boxes,        label: 'Stock'       },
   { id: 'proveedores', Icon: Truck,        label: 'Proveedores' },
+  { id: 'ventas',      Icon: Receipt,      label: 'Mis ventas'  },
   { id: 'reportes',    Icon: BarChart2,    label: 'Reportes'    },
 ]
 

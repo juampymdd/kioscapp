@@ -3,6 +3,7 @@ use serde::Deserialize;
 const WIDTH: usize = 42;
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct ItemTicket {
     pub descripcion: String,
     pub cantidad: f64,
