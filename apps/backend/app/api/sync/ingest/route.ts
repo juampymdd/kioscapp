@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
-import { ventas, venta_items, cajas, movimientos_caja, proveedores } from '@/src/db/schema'
+import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta } from '@/src/db/schema'
 import { optionsResponse, withCors } from '@/src/lib/cors'
+import { and, eq } from 'drizzle-orm'
 
 type IngestPayload = {
   local_id: string
@@ -12,19 +13,26 @@ type IngestPayload = {
   proveedores?: (typeof proveedores.$inferInsert)[]
 }
 
-function checkAuth(req: NextRequest): boolean {
-  const secret = process.env.SYNC_SECRET
-  if (!secret) return true
-  return req.headers.get('x-sync-secret') === secret
+async function checkAuth(req: NextRequest, localId: string): Promise<boolean> {
+  const secret = req.headers.get('x-sync-secret')
+  if (!secret) return false
+
+  // Backward-compat: accept env var secret (for development / migration)
+  const envSecret = process.env.SYNC_SECRET
+  if (envSecret && secret === envSecret) return true
+
+  // Primary: validate against registered punto de venta
+  if (!localId) return false
+  const db = getDb()
+  const rows = await db.select({ sync_secret: puntos_venta.sync_secret })
+    .from(puntos_venta)
+    .where(and(eq(puntos_venta.id, localId), eq(puntos_venta.activo, true)))
+  return rows.length > 0 && rows[0].sync_secret === secret
 }
 
 export function OPTIONS() { return optionsResponse() }
 
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) {
-    return withCors(NextResponse.json({ error: 'No autorizado' }, { status: 401 }))
-  }
-
   let body: IngestPayload
   try {
     body = await req.json()
@@ -34,6 +42,10 @@ export async function POST(req: NextRequest) {
 
   if (!body.local_id) {
     return withCors(NextResponse.json({ error: 'local_id requerido' }, { status: 400 }))
+  }
+
+  if (!await checkAuth(req, body.local_id)) {
+    return withCors(NextResponse.json({ error: 'No autorizado' }, { status: 401 }))
   }
 
   const db = getDb()

@@ -1,5 +1,5 @@
 import {
-  pgTable, text, integer, real, boolean, timestamp, index,
+  pgTable, text, integer, real, boolean, index,
 } from 'drizzle-orm/pg-core'
 
 // Campos de sincronización comunes — composición manual (Drizzle no tiene mixins)
@@ -101,4 +101,28 @@ export const proveedores = pgTable('proveedores', {
   activo:   boolean('activo').notNull().default(true),
 }, t => [
   index('idx_proveedores_local').on(t.local_id),
+])
+
+// Platform tables — not synced from desktop, managed via web dashboard
+
+export const users = pgTable('users', {
+  id:            text('id').primaryKey(),
+  email:         text('email').notNull().unique(),
+  password_hash: text('password_hash').notNull(),
+  nombre:        text('nombre').notNull(),
+  created_at:    text('created_at').notNull(),
+})
+
+export const puntos_venta = pgTable('puntos_venta', {
+  id:          text('id').primaryKey(),             // this IS the local_id used by the desktop app
+  user_id:     text('user_id').notNull().references(() => users.id),
+  nombre:      text('nombre').notNull(),
+  direccion:   text('direccion'),
+  ciudad:      text('ciudad'),
+  provincia:   text('provincia'),
+  sync_secret: text('sync_secret').notNull(),
+  activo:      boolean('activo').notNull().default(true),
+  created_at:  text('created_at').notNull(),
+}, t => [
+  index('idx_pv_user').on(t.user_id),
 ])
