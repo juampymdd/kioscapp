@@ -1,13 +1,12 @@
-/**
- * GET /api/catalog?since=<ISO8601>
- * Devuelve productos y stock actualizados después de `since`.
- */
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
 import { productos, stock } from '@/src/db/schema'
 import { gte } from 'drizzle-orm'
+import { optionsResponse, withCors } from '@/src/lib/cors'
 
 export const dynamic = 'force-dynamic'
+
+export function OPTIONS() { return optionsResponse() }
 
 export async function GET(req: NextRequest) {
   const db = getDb()
@@ -22,21 +21,17 @@ export async function GET(req: NextRequest) {
       : db.select().from(stock),
   ])
 
-  return NextResponse.json({
+  return withCors(NextResponse.json({
     productos: productosData,
     stock: stockData,
     generado_at: new Date().toISOString(),
-  })
+  }))
 }
 
-/**
- * POST /api/catalog
- * Upsert de productos desde el panel admin.
- */
 export async function POST(req: NextRequest) {
   const body = await req.json()
   if (!Array.isArray(body.productos)) {
-    return NextResponse.json({ error: 'productos[] requerido' }, { status: 400 })
+    return withCors(NextResponse.json({ error: 'productos[] requerido' }, { status: 400 }))
   }
 
   const db = getDb()
@@ -52,5 +47,5 @@ export async function POST(req: NextRequest) {
       },
     })
 
-  return NextResponse.json({ ok: true, upserted: body.productos.length })
+  return withCors(NextResponse.json({ ok: true, upserted: body.productos.length }))
 }

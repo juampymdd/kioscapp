@@ -1,11 +1,7 @@
-/**
- * POST /api/sync/ingest
- * Recibe ventas, items, cajas, movimientos y proveedores del local.
- * Idempotente por UUID: ON CONFLICT DO NOTHING.
- */
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
 import { ventas, venta_items, cajas, movimientos_caja, proveedores } from '@/src/db/schema'
+import { optionsResponse, withCors } from '@/src/lib/cors'
 
 type IngestPayload = {
   local_id: string
@@ -22,20 +18,22 @@ function checkAuth(req: NextRequest): boolean {
   return req.headers.get('x-sync-secret') === secret
 }
 
+export function OPTIONS() { return optionsResponse() }
+
 export async function POST(req: NextRequest) {
   if (!checkAuth(req)) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    return withCors(NextResponse.json({ error: 'No autorizado' }, { status: 401 }))
   }
 
   let body: IngestPayload
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
+    return withCors(NextResponse.json({ error: 'JSON inválido' }, { status: 400 }))
   }
 
   if (!body.local_id) {
-    return NextResponse.json({ error: 'local_id requerido' }, { status: 400 })
+    return withCors(NextResponse.json({ error: 'local_id requerido' }, { status: 400 }))
   }
 
   const db = getDb()
@@ -77,9 +75,9 @@ export async function POST(req: NextRequest) {
       ingested.proveedores = body.proveedores.length
     }
 
-    return NextResponse.json({ ok: true, ingested })
+    return withCors(NextResponse.json({ ok: true, ingested }))
   } catch (err) {
     console.error('[sync/ingest]', err)
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+    return withCors(NextResponse.json({ error: 'Error interno' }, { status: 500 }))
   }
 }
