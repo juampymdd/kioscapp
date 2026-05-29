@@ -7,6 +7,7 @@ import ProductGrid from '../components/ProductGrid'
 import Cart from '../components/Cart'
 import PaymentModal from '../components/PaymentModal'
 import { formatCentavos } from '../lib/money'
+import { syncService } from '../services/syncService'
 
 export default function POSScreen() {
   const { cajaActiva } = useCajaStore()
@@ -18,6 +19,7 @@ export default function POSScreen() {
   function handleSuccess() {
     setShowPayment(false)
     setLastSale(new Date().toLocaleTimeString('es-AR'))
+    syncService.sync()
   }
 
   return (

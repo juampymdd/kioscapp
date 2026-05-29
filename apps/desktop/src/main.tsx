@@ -5,7 +5,7 @@ import './index.css'
 import { SqliteDataStore } from './store/SqliteDataStore'
 import { setDataStore } from './store/dataStore'
 import { seedIfEmpty } from './lib/seeder'
-import { startSyncEngine } from './lib/syncEngine'
+import { syncService } from './services/syncService'
 
 async function bootstrap() {
   const localId = import.meta.env.VITE_LOCAL_ID ?? 'local-demo'
@@ -13,7 +13,7 @@ async function bootstrap() {
   await store.init()
   setDataStore(store)
   await seedIfEmpty(store)
-  startSyncEngine()
+  syncService.start()
 }
 
 bootstrap()

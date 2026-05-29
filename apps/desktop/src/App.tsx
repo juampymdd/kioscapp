@@ -10,6 +10,7 @@ import ReportesScreen from './screens/ReportesScreen'
 import Sidebar, { type ScreenId } from './components/Sidebar'
 import CerrarCaja from './screens/CerrarCaja'
 import StockAlerts from './components/StockAlerts'
+import SyncIndicator from './components/SyncIndicator'
 
 export default function App() {
   const { cajaActiva, setCajaActiva } = useCajaStore()
@@ -45,8 +46,9 @@ export default function App() {
 
       {/* Top bar con StockAlerts */}
       <div className="flex flex-col flex-1 min-w-0">
-        <div className="flex items-center justify-end px-4 py-1.5 bg-slate-900
+        <div className="flex items-center justify-between px-4 py-1.5 bg-slate-900
                         border-b border-slate-800 shrink-0">
+          <SyncIndicator />
           <StockAlerts />
         </div>
 

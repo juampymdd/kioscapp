@@ -91,3 +91,14 @@ export const movimientos_caja = pgTable('movimientos_caja', {
 }, t => [
   index('idx_movimientos_caja').on(t.caja_id),
 ])
+
+export const proveedores = pgTable('proveedores', {
+  ...syncFields,
+  nombre:   text('nombre').notNull(),
+  telefono: text('telefono'),
+  email:    text('email'),
+  notas:    text('notas'),
+  activo:   boolean('activo').notNull().default(true),
+}, t => [
+  index('idx_proveedores_local').on(t.local_id),
+])
