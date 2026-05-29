@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useCajaStore } from './store/cajaStore'
 import { getDataStore } from './store/dataStore'
 import AbrirCaja from './screens/AbrirCaja'
+import SetupScreen from './screens/SetupScreen'
 import POSScreen from './screens/POSScreen'
 import ProductosScreen from './screens/ProductosScreen'
 import StockScreen from './screens/StockScreen'
@@ -14,15 +15,23 @@ import SyncIndicator from './components/SyncIndicator'
 
 export default function App() {
   const { cajaActiva, setCajaActiva } = useCajaStore()
-  const [loading, setLoading] = useState(true)
-  const [screen, setScreen] = useState<ScreenId>('pos')
+  const [loading,    setLoading]    = useState(true)
+  const [needsSetup, setNeedsSetup] = useState(false)
+  const [screen,     setScreen]     = useState<ScreenId>('pos')
   const [showCerrarCaja, setShowCerrarCaja] = useState(false)
 
   useEffect(() => {
-    getDataStore()
-      .getCajaActiva()
-      .then(caja => setCajaActiva(caja))
-      .finally(() => setLoading(false))
+    const store = getDataStore()
+    store.getConfig('local_id').then(async localId => {
+      if (!localId) {
+        setNeedsSetup(true)
+        setLoading(false)
+        return
+      }
+      const caja = await store.getCajaActiva()
+      setCajaActiva(caja)
+      setLoading(false)
+    })
   }, [setCajaActiva])
 
   if (loading) {
@@ -30,6 +39,16 @@ export default function App() {
       <div className="flex h-full items-center justify-center bg-slate-950">
         <div className="text-slate-400 text-lg animate-pulse">Iniciando KioscApp…</div>
       </div>
+    )
+  }
+
+  if (needsSetup) {
+    return (
+      <SetupScreen onComplete={async () => {
+        setNeedsSetup(false)
+        const caja = await getDataStore().getCajaActiva()
+        setCajaActiva(caja)
+      }} />
     )
   }
 

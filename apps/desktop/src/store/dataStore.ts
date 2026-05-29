@@ -47,6 +47,10 @@ export interface DataStore {
   upsertProveedor(p: Proveedor): Promise<void>
   deleteProveedor(id: string): Promise<void>
 
+  // ── Config local ─────────────────────────────────────────────────────────
+  getConfig(key: string): Promise<string | null>
+  setConfig(key: string, value: string): Promise<void>
+
   // ── Sincronización ────────────────────────────────────────────────────────
   getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>>
   marcarSincronizado(tabla: string, ids: string[]): Promise<void>

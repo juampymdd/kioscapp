@@ -1,9 +1,6 @@
 import { getDataStore } from '../store/dataStore'
 import { SqliteDataStore } from '../store/SqliteDataStore'
 
-const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.replace(/\/$/, '')
-const SYNC_SECRET = import.meta.env.VITE_SYNC_SECRET as string | undefined
-const LOCAL_ID    = (import.meta.env.VITE_LOCAL_ID as string | undefined) ?? 'local-demo'
 const SYNC_INTERVAL_MS = 30_000
 
 export type SyncStatus = 'idle' | 'syncing' | 'ok' | 'error' | 'offline' | 'disabled'
@@ -28,8 +25,18 @@ class SyncService {
   private timer: ReturnType<typeof setInterval> | null = null
   private running = false
 
-  start() {
-    if (!BACKEND_URL) {
+  // Config leída de la DB al iniciar
+  private backendUrl: string | null = null
+  private syncSecret: string | null = null
+  private localId: string = 'local-demo'
+
+  async start() {
+    const store = getDataStore()
+    this.backendUrl = await store.getConfig('backend_url')
+    this.syncSecret = await store.getConfig('sync_secret')
+    this.localId = (await store.getConfig('local_id')) ?? 'local-demo'
+
+    if (!this.backendUrl) {
       this.setState({ status: 'disabled' })
       return
     }
@@ -45,6 +52,13 @@ class SyncService {
     if (this.timer) clearInterval(this.timer)
   }
 
+  /** Llamar después de guardar config para recargar y arrancar. */
+  async restart() {
+    this.stop()
+    this.setState({ status: 'idle', lastError: null })
+    await this.start()
+  }
+
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn)
     fn(this.state)
@@ -52,7 +66,7 @@ class SyncService {
   }
 
   async sync(): Promise<void> {
-    if (this.running || !BACKEND_URL) return
+    if (this.running || !this.backendUrl) return
     if (!navigator.onLine) {
       this.setState({ status: 'offline' })
       return
@@ -64,7 +78,6 @@ class SyncService {
     try {
       const store = getDataStore() as SqliteDataStore
       const pendientes = await store.getPendientesSincronizacion()
-
       const totalPending = pendientes.reduce((s, t) => s + t.ids.length, 0)
 
       if (totalPending === 0) {
@@ -73,29 +86,23 @@ class SyncService {
         return
       }
 
-      // Recopilar registros completos por tabla
-      const payload: Record<string, unknown[]> = { local_id: LOCAL_ID as unknown as unknown[] }
-
+      const payload: Record<string, unknown> = { local_id: this.localId }
       for (const { tabla, ids } of pendientes) {
-        const rows = await fetchPendingRows(store, tabla, ids)
+        const rows = await fetchRows(store, tabla, ids)
         if (rows.length) payload[tabla] = rows
       }
 
-      const res = await fetch(`${BACKEND_URL}/api/sync/ingest`, {
+      const res = await fetch(`${this.backendUrl}/api/sync/ingest`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(SYNC_SECRET ? { 'x-sync-secret': SYNC_SECRET } : {}),
+          ...(this.syncSecret ? { 'x-sync-secret': this.syncSecret } : {}),
         },
         body: JSON.stringify(payload),
       })
 
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(`HTTP ${res.status}: ${txt}`)
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
 
-      // Marcar como sincronizados
       for (const { tabla, ids } of pendientes) {
         await store.marcarSincronizado(tabla, ids)
       }
@@ -108,11 +115,6 @@ class SyncService {
     } finally {
       this.running = false
     }
-  }
-
-  async refreshPendingCount() {
-    const count = await this.countPending()
-    this.setState({ pendingCount: count })
   }
 
   private async countPending(): Promise<number> {
@@ -133,14 +135,13 @@ class SyncService {
   getState(): SyncState { return this.state }
 }
 
-async function fetchPendingRows(store: SqliteDataStore, tabla: string, ids: string[]): Promise<unknown[]> {
+async function fetchRows(store: SqliteDataStore, tabla: string, ids: string[]): Promise<unknown[]> {
   if (!ids.length) return []
   const placeholders = ids.map((_, i) => `$${i + 1}`).join(',')
-  const rows = await store.db.select<Record<string, unknown>[]>(
+  return store.db.select<Record<string, unknown>[]>(
     `SELECT * FROM ${tabla} WHERE id IN (${placeholders})`,
     ids,
   )
-  return rows
 }
 
 export const syncService = new SyncService()

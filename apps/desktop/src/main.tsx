@@ -13,7 +13,7 @@ async function bootstrap() {
   await store.init()
   setDataStore(store)
   await seedIfEmpty(store)
-  syncService.start()
+  await syncService.start()
 }
 
 bootstrap()

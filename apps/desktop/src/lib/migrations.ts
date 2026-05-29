@@ -102,6 +102,15 @@ export const migrations = [
     `,
   },
   {
+    description: 'Tabla config local — Fase 2b',
+    sql: `
+      CREATE TABLE IF NOT EXISTS config (
+        key    TEXT PRIMARY KEY,
+        value  TEXT NOT NULL
+      );
+    `,
+  },
+  {
     description: 'Tabla proveedores — Fase 2',
     sql: `
       CREATE TABLE IF NOT EXISTS proveedores (

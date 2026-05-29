@@ -438,6 +438,24 @@ export class SqliteDataStore implements DataStore {
     )
   }
 
+  // ── Config ─────────────────────────────────────────────────────────────────
+
+  async getConfig(key: string): Promise<string | null> {
+    const rows = await this.db.select<{ value: string }[]>(
+      `SELECT value FROM config WHERE key = $1`,
+      [key],
+    )
+    return rows.length ? rows[0].value : null
+  }
+
+  async setConfig(key: string, value: string): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO config (key, value) VALUES ($1, $2)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [key, value],
+    )
+  }
+
   // ── Sync ───────────────────────────────────────────────────────────────────
 
   async getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>> {
