@@ -4,7 +4,7 @@
  * Idempotente por UUID: ON CONFLICT DO NOTHING.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/db'
+import { getDb } from '@/src/db'
 import { ventas, venta_items, cajas, movimientos_caja, proveedores } from '@/src/db/schema'
 
 type IngestPayload = {
@@ -18,7 +18,7 @@ type IngestPayload = {
 
 function checkAuth(req: NextRequest): boolean {
   const secret = process.env.SYNC_SECRET
-  if (!secret) return true // sin secret configurado, permitir (dev)
+  if (!secret) return true
   return req.headers.get('x-sync-secret') === secret
 }
 
@@ -38,44 +38,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'local_id requerido' }, { status: 400 })
   }
 
+  const db = getDb()
   const ingested: Record<string, number> = {}
 
   try {
     if (body.cajas?.length) {
-      await db
-        .insert(cajas)
+      await db.insert(cajas)
         .values(body.cajas.map(c => ({ ...c, sync_status: 'synced' as const })))
         .onConflictDoNothing()
       ingested.cajas = body.cajas.length
     }
 
     if (body.ventas?.length) {
-      await db
-        .insert(ventas)
+      await db.insert(ventas)
         .values(body.ventas.map(v => ({ ...v, sync_status: 'synced' as const })))
         .onConflictDoNothing()
       ingested.ventas = body.ventas.length
     }
 
     if (body.venta_items?.length) {
-      await db
-        .insert(venta_items)
+      await db.insert(venta_items)
         .values(body.venta_items.map(i => ({ ...i, sync_status: 'synced' as const })))
         .onConflictDoNothing()
       ingested.venta_items = body.venta_items.length
     }
 
     if (body.movimientos_caja?.length) {
-      await db
-        .insert(movimientos_caja)
+      await db.insert(movimientos_caja)
         .values(body.movimientos_caja.map(m => ({ ...m, sync_status: 'synced' as const })))
         .onConflictDoNothing()
       ingested.movimientos_caja = body.movimientos_caja.length
     }
 
     if (body.proveedores?.length) {
-      await db
-        .insert(proveedores)
+      await db.insert(proveedores)
         .values(body.proveedores.map(p => ({ ...p, sync_status: 'synced' as const })))
         .onConflictDoNothing()
       ingested.proveedores = body.proveedores.length

@@ -1,27 +1,26 @@
 /**
  * GET /api/catalog?since=<ISO8601>
  * Devuelve productos y stock actualizados después de `since`.
- * El local usa este endpoint para sincronizar el catálogo descendente.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/db'
+import { getDb } from '@/src/db'
 import { productos, stock } from '@/src/db/schema'
 import { gte } from 'drizzle-orm'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
+  const db = getDb()
   const since = req.nextUrl.searchParams.get('since')
 
-  const productosQuery = db.select().from(productos)
-  const stockQuery = db.select().from(stock)
-
-  if (since) {
-    productosQuery.where(gte(productos.updated_at, since))
-    stockQuery.where(gte(stock.updated_at, since))
-  }
-
-  const [productosData, stockData] = await Promise.all([productosQuery, stockQuery])
+  const [productosData, stockData] = await Promise.all([
+    since
+      ? db.select().from(productos).where(gte(productos.updated_at, since))
+      : db.select().from(productos),
+    since
+      ? db.select().from(stock).where(gte(stock.updated_at, since))
+      : db.select().from(stock),
+  ])
 
   return NextResponse.json({
     productos: productosData,
@@ -40,8 +39,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'productos[] requerido' }, { status: 400 })
   }
 
-  await db
-    .insert(productos)
+  const db = getDb()
+  await db.insert(productos)
     .values(body.productos)
     .onConflictDoUpdate({
       target: productos.id,
