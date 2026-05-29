@@ -1,5 +1,5 @@
 import {
-  ShoppingCart, Package, Boxes, Truck, BarChart2, LogOut, Store,
+  ShoppingCart, Package, Boxes, Truck, BarChart2, LogOut, Store, Settings,
   type LucideIcon,
 } from 'lucide-react'
 import type { Caja } from '@kioscapp/shared'
@@ -25,9 +25,10 @@ interface Props {
   onNavigate: (screen: ScreenId) => void
   cajaActiva: Caja | null
   onCerrarCaja: () => void
+  onConfig: () => void
 }
 
-export default function Sidebar({ currentScreen, onNavigate, cajaActiva, onCerrarCaja }: Props) {
+export default function Sidebar({ currentScreen, onNavigate, cajaActiva, onCerrarCaja, onConfig }: Props) {
   return (
     <aside className="w-14 shrink-0 flex flex-col bg-slate-900 border-r border-slate-800">
       {/* Logo */}
@@ -72,6 +73,20 @@ export default function Sidebar({ currentScreen, onNavigate, cajaActiva, onCerra
             </span>
           </div>
         )}
+        <button
+          title="Configuración"
+          onClick={onConfig}
+          className="group relative flex items-center justify-center w-full h-10 rounded-lg
+                     text-slate-500 hover:bg-slate-800 hover:text-white
+                     transition-colors cursor-pointer"
+        >
+          <Settings size={18} />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-700 text-white text-xs
+                           rounded whitespace-nowrap opacity-0 group-hover:opacity-100
+                           pointer-events-none transition-opacity z-50">
+            Configuración
+          </span>
+        </button>
         <button
           title="Cerrar caja"
           onClick={onCerrarCaja}
