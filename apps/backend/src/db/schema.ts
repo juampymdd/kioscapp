@@ -113,16 +113,25 @@ export const users = pgTable('users', {
   created_at:    text('created_at').notNull(),
 })
 
+// Sucursal = physical location (store). One user can have many.
+export const sucursales = pgTable('sucursales', {
+  id:         text('id').primaryKey(),
+  user_id:    text('user_id').notNull().references(() => users.id),
+  nombre:     text('nombre').notNull(),
+  direccion:  text('direccion'),
+  ciudad:     text('ciudad'),
+  provincia:  text('provincia'),
+  activo:     boolean('activo').notNull().default(true),
+  created_at: text('created_at').notNull(),
+}, t => [index('idx_sucursales_user').on(t.user_id)])
+
+// Punto de venta = a single cash register / desktop instance inside a sucursal.
+// Its id IS the local_id used by the desktop app for sync.
 export const puntos_venta = pgTable('puntos_venta', {
-  id:          text('id').primaryKey(),             // this IS the local_id used by the desktop app
-  user_id:     text('user_id').notNull().references(() => users.id),
-  nombre:      text('nombre').notNull(),
-  direccion:   text('direccion'),
-  ciudad:      text('ciudad'),
-  provincia:   text('provincia'),
+  id:          text('id').primaryKey(),
+  sucursal_id: text('sucursal_id').notNull().references(() => sucursales.id),
+  nombre:      text('nombre').notNull().default('Caja'),
   sync_secret: text('sync_secret').notNull(),
   activo:      boolean('activo').notNull().default(true),
   created_at:  text('created_at').notNull(),
-}, t => [
-  index('idx_pv_user').on(t.user_id),
-])
+}, t => [index('idx_pv_sucursal').on(t.sucursal_id)])

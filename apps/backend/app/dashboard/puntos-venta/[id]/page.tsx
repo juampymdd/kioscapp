@@ -2,26 +2,28 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/src/lib/session'
 import { getDb } from '@/src/db'
-import { puntos_venta, ventas } from '@/src/db/schema'
+import { puntos_venta, sucursales, ventas } from '@/src/db/schema'
 import { and, eq, gte, sql } from 'drizzle-orm'
 import RegenerarSecretButton from './_components/RegenerarSecretButton'
-import EditarSucursalForm from './_components/EditarSucursalForm'
+import EditarCajaForm from './_components/EditarCajaForm'
 
 function formatPesos(centavos: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(centavos / 100)
 }
 
-export default async function DetalleSucursalPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function DetalleCajaPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session.userId) redirect('/auth/login')
 
   const { id } = await params
   const db = getDb()
 
-  const pvRows = await db.select().from(puntos_venta)
-    .where(and(eq(puntos_venta.id, id), eq(puntos_venta.user_id, session.userId)))
-  if (!pvRows.length) notFound()
-  const pv = pvRows[0]
+  const rows = await db.select({ pv: puntos_venta, suc: sucursales })
+    .from(puntos_venta)
+    .innerJoin(sucursales, eq(puntos_venta.sucursal_id, sucursales.id))
+    .where(and(eq(puntos_venta.id, id), eq(sucursales.user_id, session.userId)))
+  if (!rows.length) notFound()
+  const { pv, suc } = rows[0]
 
   // Stats: last 30 days
   const hace30 = new Date()
@@ -65,6 +67,8 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
       <div className="flex items-center gap-3 mb-6 text-sm">
         <Link href="/dashboard" className="text-slate-500 hover:text-slate-300 transition-colors">Dashboard</Link>
         <span className="text-slate-700">/</span>
+        <Link href={`/dashboard/sucursales/${suc.id}`} className="text-slate-500 hover:text-slate-300 transition-colors">{suc.nombre}</Link>
+        <span className="text-slate-700">/</span>
         <span className="text-slate-300">{pv.nombre}</span>
       </div>
 
@@ -72,7 +76,7 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">{pv.nombre}</h1>
-          {pv.ciudad && <p className="text-slate-400 text-sm mt-1">{pv.ciudad}{pv.provincia ? `, ${pv.provincia}` : ''}</p>}
+          <p className="text-slate-400 text-sm mt-1">{suc.nombre}{suc.ciudad ? ` · ${suc.ciudad}` : ''}</p>
         </div>
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${pv.activo ? 'bg-emerald-900/40 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
           {pv.activo ? 'Activo' : 'Inactivo'}
@@ -189,10 +193,10 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
         </div>
       </div>
 
-      {/* Edit */}
+      {/* Edit caja */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-        <h2 className="font-semibold text-white mb-5">Editar sucursal</h2>
-        <EditarSucursalForm pv={{ id: pv.id, nombre: pv.nombre, direccion: pv.direccion, ciudad: pv.ciudad, provincia: pv.provincia }} />
+        <h2 className="font-semibold text-white mb-5">Editar caja</h2>
+        <EditarCajaForm pv={{ id: pv.id, nombre: pv.nombre }} />
       </div>
     </div>
   )
