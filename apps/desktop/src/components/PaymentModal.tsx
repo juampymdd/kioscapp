@@ -1,7 +1,9 @@
-import { useState } from 'react'
-import { X, Banknote, CreditCard, QrCode, CheckCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { X, Banknote, CreditCard, QrCode } from 'lucide-react'
 import MoneyInput from './MoneyInput'
+import TicketModal from './TicketModal'
 import type { MedioPago, Venta, VentaItem } from '@kioscapp/shared'
+import type { DatosTicket } from '../lib/ticket'
 import { useCartStore } from '../store/cartStore'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
@@ -23,26 +25,33 @@ const MEDIOS: { id: MedioPago; label: string; Icon: LucideIcon }[] = [
 export default function PaymentModal({ onClose, onSuccess }: Props) {
   const { items, total, descuento_centavos, clear } = useCartStore()
   const { cajaActiva } = useCajaStore()
-  const [medio, setMedio] = useState<MedioPago>('efectivo')
-  const [recibido, setRecibido] = useState(0)
+  const [medio, setMedio]           = useState<MedioPago>('efectivo')
+  const [recibido, setRecibido]     = useState(0)
   const [procesando, setProcesando] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError]           = useState<string | null>(null)
 
-  const totalCentavos = total()
-  const recibidoCentavos = recibido
-  const vueltoCentavos = medio === 'efectivo'
-    ? Math.max(0, recibidoCentavos - totalCentavos)
-    : 0
-  const puedeConfirmar = medio !== 'efectivo' || recibidoCentavos >= totalCentavos
+  // Ticket step
+  const [ticketDatos, setTicketDatos] = useState<DatosTicket | null>(null)
+  const [impresora, setImpresora]     = useState<string | null>(null)
+
+  useEffect(() => {
+    getDataStore().getConfig('impresora').then(v => setImpresora(v))
+    // getConfig may return null if not configured
+  }, [])
+
+  const totalCentavos    = total()
+  const vueltoCentavos   = medio === 'efectivo' ? Math.max(0, recibido - totalCentavos) : 0
+  const puedeConfirmar   = medio !== 'efectivo' || recibido >= totalCentavos
 
   async function confirmar() {
     if (!cajaActiva) return
     setProcesando(true)
     setError(null)
     try {
-      const store = getDataStore()
-      const ts = new Date().toISOString()
-      const localId = import.meta.env.VITE_LOCAL_ID ?? 'local-demo'
+      const store   = getDataStore()
+      const ts      = new Date().toISOString()
+      const localId = (await store.getConfig('local_id')) ?? 'local-demo'
+      const nombreComercio = (await store.getConfig('nombre_comercio')) ?? 'KioscApp'
       const ventaId = crypto.randomUUID()
 
       const venta: Omit<Venta, 'sync_status'> = {
@@ -71,15 +80,33 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         subtotal_centavos: item.subtotal_centavos,
       }))
 
+      // Capture ticket data BEFORE clearing the cart
+      const datos: DatosTicket = {
+        nombre_comercio: nombreComercio,
+        fecha: new Date().toLocaleString('es-AR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        }),
+        items: items.map(i => ({
+          descripcion:          i.producto.descripcion,
+          cantidad:             i.cantidad,
+          precio_unit_centavos: i.producto.precio_centavos,
+          subtotal_centavos:    i.subtotal_centavos,
+        })),
+        total_centavos:             totalCentavos,
+        descuento_centavos,
+        medio_pago:                 medio,
+        monto_recibido_centavos:    medio === 'efectivo' ? recibido : totalCentavos,
+        vuelto_centavos:            vueltoCentavos,
+      }
+
       await store.crearVenta(venta)
       await store.crearVentaItems(ventaItems)
 
-      // Decrementar stock para cada ítem
       for (const item of items) {
         await store.decrementarStock(item.producto.id, item.cantidad)
       }
 
-      // Registrar movimiento en caja
       await store.registrarMovimientoCaja({
         id: crypto.randomUUID(),
         caja_id: cajaActiva.id,
@@ -93,7 +120,9 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
       })
 
       clear()
-      onSuccess()
+
+      // Transition to ticket step
+      setTicketDatos(datos)
     } catch (e) {
       setError(String(e))
     } finally {
@@ -101,15 +130,23 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
     }
   }
 
+  // Show ticket preview after sale
+  if (ticketDatos) {
+    return (
+      <TicketModal
+        datos={ticketDatos}
+        impresora={impresora}
+        onDone={onSuccess}
+      />
+    )
+  }
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md border border-slate-700 shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white">Cobro</h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white cursor-pointer"
-          >
+          <button onClick={onClose} className="text-slate-400 hover:text-white cursor-pointer">
             <X size={20} />
           </button>
         </div>
@@ -159,7 +196,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
               />
             </div>
 
-            {recibidoCentavos >= totalCentavos && (
+            {recibido >= totalCentavos && (
               <div className="bg-emerald-900/30 border border-emerald-700 rounded-xl p-3 text-center">
                 <p className="text-emerald-400 text-sm">Vuelto</p>
                 <p className="text-emerald-300 text-3xl font-bold">
@@ -168,20 +205,18 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
               </div>
             )}
 
-            {recibido > 0 && recibidoCentavos < totalCentavos && (
+            {recibido > 0 && recibido < totalCentavos && (
               <div className="bg-red-900/30 border border-red-700 rounded-xl p-3 text-center">
                 <p className="text-red-400 text-sm">Falta</p>
                 <p className="text-red-300 text-2xl font-bold">
-                  {formatCentavos(totalCentavos - recibidoCentavos)}
+                  {formatCentavos(totalCentavos - recibido)}
                 </p>
               </div>
             )}
           </div>
         )}
 
-        {error && (
-          <p className="text-red-400 text-sm mb-4">{error}</p>
-        )}
+        {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
         <div className="grid grid-cols-2 gap-3">
           <button
@@ -198,9 +233,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
                        disabled:opacity-40 text-white font-bold
                        cursor-pointer transition-colors"
           >
-            {procesando
-              ? 'Procesando…'
-              : <span className="flex items-center gap-1.5 justify-center"><CheckCircle size={16} /> Confirmar</span>}
+            {procesando ? 'Procesando…' : 'Confirmar'}
           </button>
         </div>
       </div>
