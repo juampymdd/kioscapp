@@ -1,3 +1,4 @@
+import { ShoppingCart, X } from 'lucide-react'
 import { useCartStore, type CartItem } from '../store/cartStore'
 import { formatCentavos } from '../lib/money'
 
@@ -47,7 +48,7 @@ function CartRow({ item }: { item: CartItem }) {
                    opacity-0 group-hover:opacity-100 text-lg shrink-0"
         title="Quitar"
       >
-        ✕
+        <X size={15} />
       </button>
     </div>
   )
@@ -59,7 +60,7 @@ export default function Cart() {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-500">
-        <div className="text-5xl mb-3">🛒</div>
+        <ShoppingCart size={48} className="mb-3 text-slate-600" />
         <p className="text-sm">Carrito vacío</p>
         <p className="text-xs mt-1">Escaneá o seleccioná un producto</p>
       </div>
