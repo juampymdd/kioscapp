@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Store } from 'lucide-react'
 import { getDataStore } from '../store/dataStore'
 import { syncService } from '../services/syncService'
@@ -14,6 +14,12 @@ export default function SetupScreen({ onComplete }: Props) {
   const [syncSecret, setSyncSecret] = useState('')
   const [guardando,  setGuardando]  = useState(false)
   const [error,      setError]      = useState<string | null>(null)
+  const localIdRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => localIdRef.current?.focus(), 150)
+    return () => clearTimeout(t)
+  }, [])
 
   async function guardar() {
     if (!localId.trim() || !syncSecret.trim()) return
@@ -51,11 +57,11 @@ export default function SetupScreen({ onComplete }: Props) {
               ID del local <span className="text-red-400">*</span>
             </label>
             <input
+              ref={localIdRef}
               type="text"
               value={localId}
               onChange={e => setLocalId(e.target.value)}
               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              autoFocus
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
                          text-white text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500
                          placeholder-slate-600"

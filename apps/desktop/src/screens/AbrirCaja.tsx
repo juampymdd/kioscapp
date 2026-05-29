@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Store } from 'lucide-react'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
@@ -9,6 +9,12 @@ export default function AbrirCaja() {
   const [montoStr, setMontoStr] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 150)
+    return () => clearTimeout(t)
+  }, [])
 
   async function handleAbrir() {
     const monto = parseCentavos(montoStr)
@@ -68,13 +74,13 @@ export default function AbrirCaja() {
           Monto inicial en caja
         </label>
         <input
+          ref={inputRef}
           type="text"
           inputMode="decimal"
           value={montoStr}
           onChange={e => setMontoStr(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAbrir()}
           placeholder="0,00"
-          autoFocus
           className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3
                      text-white text-xl text-right placeholder-slate-500
                      focus:outline-none focus:ring-2 focus:ring-blue-500"
