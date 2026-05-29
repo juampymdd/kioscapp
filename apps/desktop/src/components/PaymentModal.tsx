@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { X, Banknote, CreditCard, QrCode, CheckCircle } from 'lucide-react'
+import MoneyInput from './MoneyInput'
 import type { MedioPago, Venta, VentaItem } from '@kioscapp/shared'
 import { useCartStore } from '../store/cartStore'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
-import { formatCentavos, parseCentavos } from '../lib/money'
+import { formatCentavos } from '../lib/money'
 
 interface Props {
   onClose: () => void
@@ -23,12 +24,12 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
   const { items, total, descuento_centavos, clear } = useCartStore()
   const { cajaActiva } = useCajaStore()
   const [medio, setMedio] = useState<MedioPago>('efectivo')
-  const [recibidoStr, setRecibidoStr] = useState('')
+  const [recibido, setRecibido] = useState(0)
   const [procesando, setProcesando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const totalCentavos = total()
-  const recibidoCentavos = parseCentavos(recibidoStr || '0')
+  const recibidoCentavos = recibido
   const vueltoCentavos = medio === 'efectivo'
     ? Math.max(0, recibidoCentavos - totalCentavos)
     : 0
@@ -52,7 +53,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         total_centavos: totalCentavos,
         descuento_centavos,
         medio_pago: medio,
-        monto_recibido_centavos: medio === 'efectivo' ? recibidoCentavos : totalCentavos,
+        monto_recibido_centavos: medio === 'efectivo' ? recibido : totalCentavos,
         vuelto_centavos: vueltoCentavos,
         anulada: false,
         venta_anulacion_id: null,
@@ -127,7 +128,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
           {MEDIOS.map(m => (
             <button
               key={m.id}
-              onClick={() => setMedio(m.id)}
+              onClick={() => { setMedio(m.id); setRecibido(0) }}
               className={`py-3 px-4 rounded-xl border font-medium text-sm
                           flex items-center gap-2 cursor-pointer transition-all
                           ${medio === m.id
@@ -148,14 +149,10 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
               <label className="text-slate-300 text-sm font-medium block mb-1">
                 Monto recibido
               </label>
-              <input
-                type="text"
-                inputMode="decimal"
+              <MoneyInput
+                centavos={recibido}
+                onChange={setRecibido}
                 autoFocus
-                value={recibidoStr}
-                onChange={e => setRecibidoStr(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && puedeConfirmar && confirmar()}
-                placeholder="0,00"
                 className="w-full bg-slate-800 border border-slate-600 rounded-xl
                            px-4 py-3 text-white text-xl text-right
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -171,7 +168,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
               </div>
             )}
 
-            {recibidoStr && recibidoCentavos < totalCentavos && (
+            {recibido > 0 && recibidoCentavos < totalCentavos && (
               <div className="bg-red-900/30 border border-red-700 rounded-xl p-3 text-center">
                 <p className="text-red-400 text-sm">Falta</p>
                 <p className="text-red-300 text-2xl font-bold">

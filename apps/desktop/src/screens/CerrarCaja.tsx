@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
-import { formatCentavos, parseCentavos } from '../lib/money'
+import { formatCentavos } from '../lib/money'
+import MoneyInput from '../components/MoneyInput'
 import type { MovimientoCaja, Venta } from '@kioscapp/shared'
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 
 export default function CerrarCaja({ onCancelar }: Props) {
   const { cajaActiva, setCajaActiva } = useCajaStore()
-  const [montoStr, setMontoStr] = useState('')
+  const [monto, setMonto] = useState(0)
   const [_movimientos, setMovimientos] = useState<MovimientoCaja[]>([])
   const [ventas, setVentas] = useState<Venta[]>([])
   const [cerrando, setCerrando] = useState(false)
@@ -39,7 +40,6 @@ export default function CerrarCaja({ onCancelar }: Props) {
 
   async function cerrar() {
     if (!cajaActiva) return
-    const monto = parseCentavos(montoStr)
     setCerrando(true)
     try {
       const store = getDataStore()
@@ -103,12 +103,10 @@ export default function CerrarCaja({ onCancelar }: Props) {
         <label className="block text-slate-300 text-sm font-medium mb-2">
           Efectivo contado en caja
         </label>
-        <input
-          type="text"
-          inputMode="decimal"
-          value={montoStr}
-          onChange={e => setMontoStr(e.target.value)}
-          placeholder="0,00"
+        <MoneyInput
+          centavos={monto}
+          onChange={setMonto}
+          autoFocus
           className="w-full bg-slate-800 border border-slate-600 rounded-xl
                      px-4 py-3 text-white text-xl text-right mb-6
                      focus:outline-none focus:ring-2 focus:ring-blue-500"

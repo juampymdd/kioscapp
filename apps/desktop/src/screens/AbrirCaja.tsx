@@ -1,27 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Store } from 'lucide-react'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
-import { parseCentavos, formatCentavos } from '../lib/money'
+import MoneyInput from '../components/MoneyInput'
 
 export default function AbrirCaja() {
   const { setCajaActiva } = useCajaStore()
-  const [montoStr, setMontoStr] = useState('')
+  const [monto, setMonto] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.focus(), 150)
-    return () => clearTimeout(t)
-  }, [])
 
   async function handleAbrir() {
-    const monto = parseCentavos(montoStr)
-    if (monto < 0) {
-      setError('Ingresá un monto válido')
-      return
-    }
     setLoading(true)
     setError(null)
     try {
@@ -34,6 +23,7 @@ export default function AbrirCaja() {
         apertura_at: ts,
         cierre_at: null,
         monto_apertura_centavos: monto,
+
         monto_cierre_centavos: null,
         estado: 'abierta' as const,
         created_at: ts,
@@ -73,24 +63,13 @@ export default function AbrirCaja() {
         <label className="block text-slate-300 text-sm font-medium mb-2">
           Monto inicial en caja
         </label>
-        <input
-          ref={inputRef}
-          type="text"
-          inputMode="decimal"
-          value={montoStr}
-          onChange={e => setMontoStr(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAbrir()}
-          placeholder="0,00"
+        <MoneyInput
+          centavos={monto}
+          onChange={setMonto}
+          autoFocus
           className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3
-                     text-white text-xl text-right placeholder-slate-500
-                     focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     text-white text-xl text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-
-        {montoStr && (
-          <p className="text-slate-400 text-sm mt-2 text-right">
-            = {formatCentavos(parseCentavos(montoStr))}
-          </p>
-        )}
 
         {error && (
           <p className="text-red-400 text-sm mt-3">{error}</p>
