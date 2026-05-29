@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Store, RefreshCw } from 'lucide-react'
+import { Store } from 'lucide-react'
 import { getDataStore } from '../store/dataStore'
 import { syncService } from '../services/syncService'
 
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function SetupScreen({ onComplete }: Props) {
-  const [localId,    setLocalId]    = useState<string>(crypto.randomUUID())
+  const [localId,    setLocalId]    = useState<string>('')
   const [syncSecret, setSyncSecret] = useState('')
   const [guardando,  setGuardando]  = useState(false)
   const [error,      setError]      = useState<string | null>(null)
@@ -50,25 +50,16 @@ export default function SetupScreen({ onComplete }: Props) {
             <label className="text-slate-400 text-xs block mb-1.5">
               ID del local <span className="text-red-400">*</span>
             </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={localId}
-                onChange={e => setLocalId(e.target.value)}
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-                           text-white text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500
-                           placeholder-slate-600"
-              />
-              <button
-                onClick={() => setLocalId(crypto.randomUUID())}
-                title="Generar nuevo ID"
-                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300
-                           rounded-lg cursor-pointer transition-colors"
-              >
-                <RefreshCw size={15} />
-              </button>
-            </div>
+            <input
+              type="text"
+              value={localId}
+              onChange={e => setLocalId(e.target.value)}
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              autoFocus
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
+                         text-white text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500
+                         placeholder-slate-600"
+            />
           </div>
 
           <div>
