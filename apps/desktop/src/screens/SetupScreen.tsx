@@ -1,27 +1,27 @@
 import { useState } from 'react'
-import { Store, RefreshCw } from 'lucide-react'
+import { Store } from 'lucide-react'
 import { getDataStore } from '../store/dataStore'
 import { syncService } from '../services/syncService'
 
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? ''
+const LOCAL_ID    = (import.meta.env.VITE_LOCAL_ID    as string | undefined) ?? crypto.randomUUID()
 
 interface Props {
   onComplete: () => void
 }
 
 export default function SetupScreen({ onComplete }: Props) {
-  const [localId,    setLocalId]    = useState<string>(crypto.randomUUID())
   const [syncSecret, setSyncSecret] = useState('')
   const [guardando,  setGuardando]  = useState(false)
   const [error,      setError]      = useState<string | null>(null)
 
   async function guardar() {
-    if (!localId.trim()) return
+    if (!syncSecret.trim()) return
     setGuardando(true)
     setError(null)
     try {
       const store = getDataStore()
-      await store.setConfig('local_id',    localId.trim())
+      await store.setConfig('local_id',    LOCAL_ID)
       await store.setConfig('backend_url', BACKEND_URL)
       await store.setConfig('sync_secret', syncSecret.trim())
       await syncService.restart()
@@ -46,32 +46,6 @@ export default function SetupScreen({ onComplete }: Props) {
         </div>
 
         <div className="space-y-5">
-          <div>
-            <label className="text-slate-400 text-xs block mb-1.5">
-              ID del local <span className="text-red-400">*</span>
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={localId}
-                onChange={e => setLocalId(e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-                           text-white text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-              <button
-                onClick={() => setLocalId(crypto.randomUUID())}
-                title="Generar nuevo ID"
-                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300
-                           rounded-lg cursor-pointer transition-colors"
-              >
-                <RefreshCw size={15} />
-              </button>
-            </div>
-            <p className="text-slate-500 text-xs mt-1">
-              Identificador único de este kiosco. No lo cambies después.
-            </p>
-          </div>
-
           <div>
             <label className="text-slate-400 text-xs block mb-1.5">
               Clave de sincronización <span className="text-red-400">*</span>
@@ -99,7 +73,7 @@ export default function SetupScreen({ onComplete }: Props) {
 
           <button
             onClick={guardar}
-            disabled={guardando || !localId.trim() || !syncSecret.trim()}
+            disabled={guardando || !syncSecret.trim()}
             className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40
                        text-white font-semibold rounded-xl cursor-pointer transition-colors"
           >
