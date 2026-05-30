@@ -93,9 +93,12 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const desdeIso = `${desde.toISOString().slice(0, 10)}T00:00:00.000Z`
   const hoyAR = new Date().toLocaleDateString('en-CA', { timeZone: TZ }) // YYYY-MM-DD
 
-  // Expresiones SQL reutilizables (hora local AR)
-  const localDate = sql<string>`to_char((${ventas.created_at}::timestamptz AT TIME ZONE ${TZ}), 'YYYY-MM-DD')`
-  const localHour = sql<number>`EXTRACT(HOUR FROM (${ventas.created_at}::timestamptz AT TIME ZONE ${TZ}))`
+  // Expresiones SQL reutilizables (hora local AR).
+  // El timezone va inline como literal (constante, no input de usuario): si se
+  // pasara como parámetro, Drizzle emite un placeholder distinto en SELECT y en
+  // GROUP BY y Postgres deja de reconocer la expresión como agrupable (42803).
+  const localDate = sql<string>`to_char((${ventas.created_at}::timestamptz AT TIME ZONE 'America/Argentina/Buenos_Aires'), 'YYYY-MM-DD')`
+  const localHour = sql<number>`EXTRACT(HOUR FROM (${ventas.created_at}::timestamptz AT TIME ZONE 'America/Argentina/Buenos_Aires'))`
   const vendidas = and(
     inArray(ventas.local_id, localIds),
     eq(ventas.anulada, false),
