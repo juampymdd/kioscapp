@@ -61,7 +61,8 @@ export default function ConfigScreen({ onClose }: Props) {
       const credencialesCambiaron = credsDirty.current
 
       await store.setConfig('local_id',        localId.trim())
-      await store.setConfig('backend_url',     BACKEND_URL)
+      // No pisar backend_url con vacío si VITE_BACKEND_URL no está definida.
+      if (BACKEND_URL) await store.setConfig('backend_url', BACKEND_URL)
       await store.setConfig('sync_secret',     syncSecret.trim())
       if (nombreComercio.trim()) await store.setConfig('nombre_comercio', nombreComercio.trim())
       if (impresora)             await store.setConfig('impresora',        impresora)
