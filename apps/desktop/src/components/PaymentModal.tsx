@@ -80,6 +80,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         cantidad: item.cantidad,
         subtotal_centavos: item.subtotal_centavos,
         descuento_centavos: item.descuento_centavos,
+        descuento_origen: item.descuento_origen,
       }))
 
       // Capture ticket data BEFORE clearing the cart
@@ -96,6 +97,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
           categoria:            i.producto.categoria,
           subtotal_centavos:    i.subtotal_centavos,
           descuento_centavos:   i.descuento_centavos,
+          descuento_origen:     i.descuento_origen,
         })),
         total_centavos:             totalCentavos,
         descuento_centavos,

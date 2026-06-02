@@ -52,9 +52,15 @@ export interface DataStore {
   getConfig(key: string): Promise<string | null>
   setConfig(key: string, value: string): Promise<void>
 
-  // ── Descuentos (catálogo bajado del central) ───────────────────────────────
+  // ── Descuentos (catálogo central + promos locales) ─────────────────────────
   upsertDescuento(d: Descuento): Promise<void>
   getDescuentosActivos(): Promise<Descuento[]>
+  getDescuentos(): Promise<Descuento[]>
+  getDescuentosPendientes(): Promise<Descuento[]>
+  marcarDescuentoSincronizado(id: string): Promise<void>
+  setDescuentoActivo(id: string, activo: boolean): Promise<void>
+  eliminarDescuentoLocal(id: string): Promise<void>
+  reconciliarDescuentosCentral(idsVigentes: string[]): Promise<void>
 
   // ── Sincronización ────────────────────────────────────────────────────────
   getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>>

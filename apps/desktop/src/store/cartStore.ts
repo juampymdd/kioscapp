@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Producto, Descuento } from '@kioscapp/shared'
-import { resolverDescuentoItem } from '@kioscapp/shared'
+import { resolverDescuento, type OrigenDescuento } from '@kioscapp/shared'
 
 export interface CartItem {
   producto: Producto
@@ -8,8 +8,10 @@ export interface CartItem {
   subtotal_centavos: number
   /** Descuento manual fijado por el cajero (centavos). null = sin override manual. */
   descuentoManual_centavos: number | null
-  /** Descuento efectivo resuelto (manual o catálogo), congelable al vender. */
+  /** Descuento efectivo resuelto (promo o manual), congelable al vender. */
   descuento_centavos: number
+  /** Origen del descuento efectivo: 'promo' (catálogo) | 'manual' | null. */
+  descuento_origen: OrigenDescuento | null
 }
 
 interface CartStore {
@@ -28,15 +30,20 @@ interface CartStore {
   total: () => number
 }
 
-/** Recalcula subtotal y descuento efectivo de un ítem. */
+/** Recalcula subtotal y descuento efectivo (con origen) de un ítem. */
 function recalcItem(item: CartItem, catalogo: Descuento[]): CartItem {
   const subtotal_centavos = Math.floor(item.cantidad * item.producto.precio_centavos)
-  const descuento_centavos = resolverDescuentoItem(
+  const { centavos, origen } = resolverDescuento(
     { producto_id: item.producto.id, categoria: item.producto.categoria, subtotal_centavos },
     item.descuentoManual_centavos,
     catalogo,
   )
-  return { ...item, subtotal_centavos, descuento_centavos }
+  return { ...item, subtotal_centavos, descuento_centavos: centavos, descuento_origen: origen }
+}
+
+/** ¿El ítem tiene una promo de catálogo aplicada? (manual queda bloqueado) */
+export function tienePromo(item: CartItem): boolean {
+  return item.descuento_origen === 'promo'
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
@@ -52,7 +59,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
             ? recalcItem({ ...i, cantidad: i.cantidad + cantidad }, state.catalogo)
             : i)
         : [...state.items, recalcItem(
-            { producto, cantidad, subtotal_centavos: 0, descuentoManual_centavos: null, descuento_centavos: 0 },
+            { producto, cantidad, subtotal_centavos: 0, descuentoManual_centavos: null, descuento_centavos: 0, descuento_origen: null },
             state.catalogo,
           )]
       return { items }

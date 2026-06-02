@@ -8,6 +8,7 @@ export interface ItemTicket {
   categoria: CategoriaProducto
   subtotal_centavos: number
   descuento_centavos: number
+  descuento_origen?: 'promo' | 'manual' | null
 }
 
 export interface DatosTicket {
@@ -66,7 +67,8 @@ export function buildLineas(d: DatosTicket): LineaTicket[] {
       lines.push({ tipo: 'texto', texto: desc })
       lines.push({ tipo: 'texto', texto: rightAlign(`${cant} x ${pesos(item.precio_unit_centavos)}`, pesos(item.subtotal_centavos)) })
       if (item.descuento_centavos > 0) {
-        lines.push({ tipo: 'texto', texto: rightAlign('', `-${pesos(item.descuento_centavos)}`) })
+        const etiqueta = item.descuento_origen === 'promo' ? 'Promo' : 'Desc.'
+        lines.push({ tipo: 'texto', texto: rightAlign(`  ${etiqueta}`, `-${pesos(item.descuento_centavos)}`) })
       }
     }
   }

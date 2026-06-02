@@ -56,11 +56,11 @@ export default async function DetalleCajaPage({ params }: { params: Promise<{ id
     .orderBy(sql`${ventas.created_at} DESC`)
     .limit(10)
 
-  const totalHoy  = porDia.find(d => d.fecha === hoy)?.total_centavos ?? 0
-  const totalMes  = porDia.reduce((s, d) => s + (d.total_centavos ?? 0), 0)
-  const diasConVentas = porDia.filter(d => (d.total_centavos ?? 0) > 0).length
+  const totalHoy  = Number(porDia.find(d => d.fecha === hoy)?.total_centavos ?? 0)
+  const totalMes  = porDia.reduce((s, d) => s + Number(d.total_centavos ?? 0), 0)
+  const diasConVentas = porDia.filter(d => Number(d.total_centavos ?? 0) > 0).length
   const promedioDiario = diasConVentas > 0 ? Math.round(totalMes / diasConVentas) : 0
-  const maxDia = Math.max(...porDia.map(d => d.total_centavos ?? 0), 1)
+  const maxDia = Math.max(...porDia.map(d => Number(d.total_centavos ?? 0)), 1)
 
   return (
     <div>

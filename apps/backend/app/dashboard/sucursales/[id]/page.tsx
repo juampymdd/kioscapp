@@ -43,7 +43,7 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
     .groupBy(ventas.local_id)
 
   const statsMap = Object.fromEntries(totalesHoy.map(t => [t.local_id, t]))
-  const totalHoySucursal = cajas.reduce((s, c) => s + (statsMap[c.id]?.total_centavos ?? 0), 0)
+  const totalHoySucursal = cajas.reduce((s, c) => s + Number(statsMap[c.id]?.total_centavos ?? 0), 0)
 
   return (
     <div>

@@ -1,4 +1,4 @@
-import { ShoppingCart, X, Percent } from 'lucide-react'
+import { ShoppingCart, X, Percent, Tag } from 'lucide-react'
 import { useState } from 'react'
 import { useCartStore, type CartItem } from '../store/cartStore'
 import { formatCentavos } from '../lib/money'
@@ -8,6 +8,8 @@ function CartRow({ item }: { item: CartItem }) {
   const [editando, setEditando] = useState(false)
   const [modo, setModo] = useState<'monto' | 'porcentaje'>('porcentaje')
   const [valor, setValor] = useState('')
+
+  const esPromo = item.descuento_origen === 'promo'
 
   function aplicar() {
     const n = Number(valor)
@@ -26,15 +28,18 @@ function CartRow({ item }: { item: CartItem }) {
         <p className="flex-1 min-w-0 text-white text-sm font-medium leading-snug line-clamp-2">
           {item.producto.descripcion}
         </p>
-        <button
-          onClick={() => setEditando(e => !e)}
-          aria-label={`Descuento para ${item.producto.descripcion}`}
-          className="w-7 h-7 -mt-0.5 grid place-items-center rounded-lg text-slate-400 shrink-0
-                     hover:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer
-                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-        >
-          <Percent size={14} />
-        </button>
+        {!esPromo && (
+          <button
+            onClick={() => setEditando(e => !e)}
+            aria-label={`Descuento manual para ${item.producto.descripcion}`}
+            title="Descuento manual"
+            className="w-7 h-7 -mt-0.5 grid place-items-center rounded-lg text-slate-400 shrink-0
+                       hover:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+          >
+            <Percent size={14} />
+          </button>
+        )}
         <button
           onClick={() => removeItem(item.producto.id)}
           aria-label={`Quitar ${item.producto.descripcion} del carrito`}
@@ -81,15 +86,18 @@ function CartRow({ item }: { item: CartItem }) {
         </span>
       </div>
 
-      {/* Línea de descuento aplicado */}
+      {/* Línea de descuento aplicado, con origen */}
       {item.descuento_centavos > 0 && (
-        <div className="flex justify-end text-amber-400 text-xs tabular-nums">
-          Descuento − {formatCentavos(item.descuento_centavos)}
+        <div className="flex justify-end items-center gap-1.5 text-amber-400 text-xs tabular-nums">
+          {esPromo
+            ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300"><Tag size={11} /> Promo</span>
+            : <span className="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">Manual</span>}
+          − {formatCentavos(item.descuento_centavos)}
         </div>
       )}
 
-      {/* Editor de descuento manual */}
-      {editando && (
+      {/* Editor de descuento manual (oculto si hay promo del catálogo) */}
+      {editando && !esPromo && (
         <div className="flex items-center gap-2 mt-1">
           <div className="flex rounded-lg overflow-hidden border border-slate-600">
             <button onClick={() => setModo('porcentaje')}

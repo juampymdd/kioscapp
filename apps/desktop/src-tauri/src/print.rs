@@ -13,6 +13,8 @@ pub struct ItemTicket {
     pub subtotal_centavos: i64,
     #[serde(default)]
     pub descuento_centavos: i64,
+    #[serde(default)]
+    pub descuento_origen: Option<String>,
 }
 
 fn categoria_default() -> String { "varios".to_string() }
@@ -126,8 +128,9 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
             b.push(0x0A);
 
             if item.descuento_centavos > 0 {
+                let etiqueta = if item.descuento_origen.as_deref() == Some("promo") { "Promo" } else { "Desc." };
                 b.extend_from_slice(
-                    right_align("", &format!("-{}", pesos(item.descuento_centavos))).as_bytes(),
+                    right_align(&format!("  {}", etiqueta), &format!("-{}", pesos(item.descuento_centavos))).as_bytes(),
                 );
                 b.push(0x0A);
             }

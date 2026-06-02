@@ -494,16 +494,18 @@ export class SqliteDataStore implements DataStore {
     await this.db.execute(
       `INSERT INTO descuentos
          (id, user_id, sucursal_id, objetivo, producto_id, categoria, tipo, valor,
-          activo, created_at, updated_at, deleted_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          activo, created_at, updated_at, deleted_at, origen, sync_status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        ON CONFLICT(id) DO UPDATE SET
          sucursal_id=excluded.sucursal_id, objetivo=excluded.objetivo,
          producto_id=excluded.producto_id, categoria=excluded.categoria,
          tipo=excluded.tipo, valor=excluded.valor, activo=excluded.activo,
-         updated_at=excluded.updated_at, deleted_at=excluded.deleted_at`,
+         updated_at=excluded.updated_at, deleted_at=excluded.deleted_at,
+         origen=excluded.origen, sync_status=excluded.sync_status`,
       [
         d.id, d.user_id, d.sucursal_id, d.objetivo, d.producto_id, d.categoria,
         d.tipo, d.valor, d.activo ? 1 : 0, d.created_at, d.updated_at, d.deleted_at,
+        d.origen ?? 'central', d.sync_status ?? 'synced',
       ],
     )
   }
@@ -513,6 +515,60 @@ export class SqliteDataStore implements DataStore {
       `SELECT * FROM descuentos WHERE activo = 1 AND deleted_at IS NULL`,
     )
     return rows.map(mapDescuento)
+  }
+
+  /** Todas las promos no borradas (para la pantalla de Promociones). */
+  async getDescuentos(): Promise<Descuento[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM descuentos WHERE deleted_at IS NULL ORDER BY created_at DESC`,
+    )
+    return rows.map(mapDescuento)
+  }
+
+  /** Promos locales pendientes de subir al central. */
+  async getDescuentosPendientes(): Promise<Descuento[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM descuentos WHERE origen='local' AND sync_status='pending'`,
+    )
+    return rows.map(mapDescuento)
+  }
+
+  async marcarDescuentoSincronizado(id: string): Promise<void> {
+    await this.db.execute(`UPDATE descuentos SET sync_status='synced' WHERE id=$1`, [id])
+  }
+
+  /** Cambia activo de una promo local (no toca las del central). */
+  async setDescuentoActivo(id: string, activo: boolean): Promise<void> {
+    await this.db.execute(
+      `UPDATE descuentos SET activo=$1, sync_status='pending', updated_at=$2 WHERE id=$3 AND origen='local'`,
+      [activo ? 1 : 0, now(), id],
+    )
+  }
+
+  /** Soft-delete de una promo local. */
+  async eliminarDescuentoLocal(id: string): Promise<void> {
+    await this.db.execute(
+      `UPDATE descuentos SET deleted_at=$1, sync_status='pending', updated_at=$1 WHERE id=$2 AND origen='local'`,
+      [now(), id],
+    )
+  }
+
+  /**
+   * Reconcilia el catálogo central: marca inactivas las promos origen='central'
+   * cuyos ids ya no vienen del backend (borradas/desactivadas en la web). No toca
+   * las locales.
+   */
+  async reconciliarDescuentosCentral(idsVigentes: string[]): Promise<void> {
+    if (idsVigentes.length === 0) {
+      await this.db.execute(`UPDATE descuentos SET activo=0 WHERE origen='central'`)
+      return
+    }
+    const placeholders = idsVigentes.map((_, i) => `$${i + 1}`).join(',')
+    await this.db.execute(
+      `UPDATE descuentos SET activo=0
+         WHERE origen='central' AND id NOT IN (${placeholders})`,
+      idsVigentes,
+    )
   }
 
   // ── Sync ───────────────────────────────────────────────────────────────────
