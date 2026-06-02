@@ -20,4 +20,8 @@ export interface Descuento {
   created_at: string
   updated_at: string
   deleted_at: string | null
+  /** Local (desktop): 'central' = vino del backend; 'local' = creada en la caja. */
+  origen?: 'central' | 'local'
+  /** Local (desktop): estado de sincronización de promos locales. */
+  sync_status?: 'pending' | 'synced'
 }

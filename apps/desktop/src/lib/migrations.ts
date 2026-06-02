@@ -155,4 +155,17 @@ export const migrations = [
       );
     `,
   },
+  {
+    description: 'venta_items: origen del descuento congelado — Fase 3',
+    sql: `
+      ALTER TABLE venta_items ADD COLUMN descuento_origen TEXT;
+    `,
+  },
+  {
+    description: 'descuentos: origen (central/local) + sync_status — Fase 3',
+    sql: `
+      ALTER TABLE descuentos ADD COLUMN origen TEXT NOT NULL DEFAULT 'central';
+      ALTER TABLE descuentos ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'synced';
+    `,
+  },
 ]

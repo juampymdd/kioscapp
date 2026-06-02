@@ -1,11 +1,12 @@
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
+import { Monitor } from 'lucide-react'
 import { getSession } from '@/src/lib/session'
 import { getDb } from '@/src/db'
 import { puntos_venta, sucursales, ventas } from '@/src/db/schema'
 import { and, eq, gte, sql } from 'drizzle-orm'
 import RegenerarSecretButton from './_components/RegenerarSecretButton'
 import EditarCajaForm from './_components/EditarCajaForm'
+import PageHeader from '../../_components/PageHeader'
 
 function formatPesos(centavos: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(centavos / 100)
@@ -63,25 +64,21 @@ export default async function DetalleCajaPage({ params }: { params: Promise<{ id
 
   return (
     <div>
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-3 mb-6 text-sm">
-        <Link href="/dashboard" className="text-slate-500 hover:text-slate-300 transition-colors">Dashboard</Link>
-        <span className="text-slate-700">/</span>
-        <Link href={`/dashboard/sucursales/${suc.id}`} className="text-slate-500 hover:text-slate-300 transition-colors">{suc.nombre}</Link>
-        <span className="text-slate-700">/</span>
-        <span className="text-slate-300">{pv.nombre}</span>
-      </div>
-
-      {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{pv.nombre}</h1>
-          <p className="text-slate-400 text-sm mt-1">{suc.nombre}{suc.ciudad ? ` · ${suc.ciudad}` : ''}</p>
-        </div>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium ${pv.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
-          {pv.activo ? 'Activo' : 'Inactivo'}
-        </span>
-      </div>
+      <PageHeader
+        Icon={Monitor}
+        title={pv.nombre}
+        subtitle={`${suc.nombre}${suc.ciudad ? ` · ${suc.ciudad}` : ''}`}
+        breadcrumb={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: suc.nombre, href: `/dashboard/sucursales/${suc.id}` },
+          { label: pv.nombre },
+        ]}
+        actions={
+          <span className={`text-xs px-3 py-1 rounded-full font-medium ${pv.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+            {pv.activo ? 'Activo' : 'Inactivo'}
+          </span>
+        }
+      />
 
       {/* Stats cards */}
       <div className="grid md:grid-cols-3 gap-4 mb-8">

@@ -51,4 +51,6 @@ export interface VentaItem {
   subtotal_centavos: number     // floor(precio_unit * cantidad)
   /** Descuento aplicado a este ítem, en centavos. 0 = sin descuento. */
   descuento_centavos: number
+  /** Origen del descuento congelado: 'promo' (catálogo) | 'manual' | null. */
+  descuento_origen: 'promo' | 'manual' | null
 }

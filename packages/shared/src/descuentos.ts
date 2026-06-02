@@ -7,6 +7,16 @@ export interface DescuentoItemInput {
   subtotal_centavos: number
 }
 
+/** Origen del descuento aplicado a un ítem. */
+export type OrigenDescuento = 'promo' | 'manual'
+
+export interface DescuentoResuelto {
+  /** Centavos a descontar (>= 0, <= subtotal). */
+  centavos: number
+  /** De dónde sale el descuento, o null si no hay. */
+  origen: OrigenDescuento | null
+}
+
 /** Centavos a descontar para un descuento dado, clampeado al subtotal. */
 export function calcularDescuento(d: Descuento, subtotal_centavos: number): number {
   const raw = d.tipo === 'porcentaje'
@@ -20,7 +30,7 @@ function matchea(d: Descuento, item: DescuentoItemInput): boolean {
   return d.categoria === item.categoria
 }
 
-/** Rank de prioridad: sucursal(2) sobre global(1); producto(2) sobre categoría(1). */
+/** Rank de prioridad de catálogo: sucursal(2) sobre global(1); producto(2) sobre categoría(1). */
 function rank(d: Descuento): number {
   const scope    = d.sucursal_id !== null ? 2 : 1
   const objetivo = d.objetivo === 'producto' ? 2 : 1
@@ -28,23 +38,27 @@ function rank(d: Descuento): number {
 }
 
 /**
- * Descuento efectivo en centavos para un ítem. Gana uno solo (no acumula):
- * manual > sucursal > global; dentro de cada scope, producto > categoría.
- * El catálogo ya viene scopeado (global del dueño + esta sucursal).
+ * Descuento efectivo para un ítem. La promo de catálogo manda y es read-only en
+ * el mostrador: si algún descuento del catálogo matchea, gana (origen 'promo') y
+ * el descuento manual se ignora. El manual solo aplica cuando no hay promo.
+ * Dentro del catálogo: sucursal > global; producto > categoría. No acumula.
  */
-export function resolverDescuentoItem(
+export function resolverDescuento(
   item: DescuentoItemInput,
   manual_centavos: number | null,
   catalogo: Descuento[],
-): number {
-  if (manual_centavos !== null) {
-    return Math.max(0, Math.min(manual_centavos, item.subtotal_centavos))
+): DescuentoResuelto {
+  const promo = catalogo
+    .filter(d => d.activo && d.deleted_at === null && matchea(d, item))
+    .sort((a, b) => rank(b) - rank(a))[0]
+
+  if (promo) {
+    return { centavos: calcularDescuento(promo, item.subtotal_centavos), origen: 'promo' }
   }
 
-  const candidatos = catalogo
-    .filter(d => d.activo && d.deleted_at === null && matchea(d, item))
-    .sort((a, b) => rank(b) - rank(a))
+  if (manual_centavos !== null) {
+    return { centavos: Math.max(0, Math.min(manual_centavos, item.subtotal_centavos)), origen: 'manual' }
+  }
 
-  if (candidatos.length === 0) return 0
-  return calcularDescuento(candidatos[0], item.subtotal_centavos)
+  return { centavos: 0, origen: null }
 }

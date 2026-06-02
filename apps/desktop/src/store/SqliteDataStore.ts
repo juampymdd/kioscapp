@@ -129,6 +129,7 @@ function mapVentaItem(r: Row): VentaItem {
     cantidad: r.cantidad as number,
     subtotal_centavos: r.subtotal_centavos as number,
     descuento_centavos: (r.descuento_centavos as number) ?? 0,
+    descuento_origen: (r.descuento_origen as VentaItem['descuento_origen']) ?? null,
   }
 }
 
@@ -146,6 +147,8 @@ function mapDescuento(r: Row): Descuento {
     created_at: (r.created_at as string) ?? '',
     updated_at: (r.updated_at as string) ?? '',
     deleted_at: (r.deleted_at as string | null) ?? null,
+    origen: (r.origen as Descuento['origen']) ?? 'central',
+    sync_status: (r.sync_status as Descuento['sync_status']) ?? 'synced',
   }
 }
 
@@ -254,13 +257,13 @@ export class SqliteDataStore implements DataStore {
         `INSERT INTO venta_items
            (id, created_at, local_id, sync_status, venta_id, producto_id,
             descripcion, precio_unit_centavos, categoria, cantidad,
-            subtotal_centavos, descuento_centavos)
-         VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11)`,
+            subtotal_centavos, descuento_centavos, descuento_origen)
+         VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
         [
           item.id, item.created_at, item.local_id, item.venta_id,
           item.producto_id, item.descripcion, item.precio_unit_centavos,
           item.categoria, item.cantidad, item.subtotal_centavos,
-          item.descuento_centavos,
+          item.descuento_centavos, item.descuento_origen,
         ],
       )
     }

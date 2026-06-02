@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolverDescuentoItem, type DescuentoItemInput } from './descuentos'
+import { resolverDescuento, type DescuentoItemInput } from './descuentos'
 import type { Descuento } from './types/descuento'
 
 const item: DescuentoItemInput = {
@@ -16,27 +16,31 @@ function desc(p: Partial<Descuento>): Descuento {
   }
 }
 
-describe('resolverDescuentoItem', () => {
-  it('sin manual ni catálogo → 0', () => {
-    expect(resolverDescuentoItem(item, null, [])).toBe(0)
+describe('resolverDescuento', () => {
+  it('sin manual ni catálogo → 0 / null', () => {
+    expect(resolverDescuento(item, null, [])).toEqual({ centavos: 0, origen: null })
   })
 
-  it('manual gana siempre', () => {
-    const cat = [desc({ tipo: 'monto', valor: 500, objetivo: 'producto', producto_id: 'p1' })]
-    expect(resolverDescuentoItem(item, 200, cat)).toBe(200)
+  it('promo del catálogo gana sobre el manual (read-only)', () => {
+    const cat = [desc({ tipo: 'monto', valor: 300, objetivo: 'producto', producto_id: 'p1' })]
+    expect(resolverDescuento(item, 200, cat)).toEqual({ centavos: 300, origen: 'promo' })
+  })
+
+  it('manual aplica solo cuando no hay promo', () => {
+    expect(resolverDescuento(item, 200, [])).toEqual({ centavos: 200, origen: 'manual' })
   })
 
   it('monto se aplica tal cual', () => {
-    expect(resolverDescuentoItem(item, null, [desc({ tipo: 'monto', valor: 150 })])).toBe(150)
+    expect(resolverDescuento(item, null, [desc({ tipo: 'monto', valor: 150 })])).toEqual({ centavos: 150, origen: 'promo' })
   })
 
   it('porcentaje = floor(subtotal * valor / 100)', () => {
-    expect(resolverDescuentoItem(item, null, [desc({ tipo: 'porcentaje', valor: 10 })])).toBe(100)
+    expect(resolverDescuento(item, null, [desc({ tipo: 'porcentaje', valor: 10 })])).toEqual({ centavos: 100, origen: 'promo' })
   })
 
   it('clampa el descuento al subtotal', () => {
-    expect(resolverDescuentoItem(item, 5000, [])).toBe(1000)
-    expect(resolverDescuentoItem(item, null, [desc({ tipo: 'monto', valor: 5000 })])).toBe(1000)
+    expect(resolverDescuento(item, 5000, [])).toEqual({ centavos: 1000, origen: 'manual' })
+    expect(resolverDescuento(item, null, [desc({ tipo: 'monto', valor: 5000 })])).toEqual({ centavos: 1000, origen: 'promo' })
   })
 
   it('sucursal gana sobre global', () => {
@@ -44,7 +48,7 @@ describe('resolverDescuentoItem', () => {
       desc({ id: 'g', sucursal_id: null, tipo: 'monto', valor: 100 }),
       desc({ id: 's', sucursal_id: 'suc1', tipo: 'monto', valor: 300 }),
     ]
-    expect(resolverDescuentoItem(item, null, cat)).toBe(300)
+    expect(resolverDescuento(item, null, cat)).toEqual({ centavos: 300, origen: 'promo' })
   })
 
   it('producto gana sobre categoría dentro del mismo scope', () => {
@@ -52,15 +56,15 @@ describe('resolverDescuentoItem', () => {
       desc({ id: 'c', objetivo: 'categoria', categoria: 'bebidas', tipo: 'monto', valor: 100 }),
       desc({ id: 'p', objetivo: 'producto', producto_id: 'p1', categoria: null, tipo: 'monto', valor: 250 }),
     ]
-    expect(resolverDescuentoItem(item, null, cat)).toBe(250)
+    expect(resolverDescuento(item, null, cat)).toEqual({ centavos: 250, origen: 'promo' })
   })
 
-  it('ignora descuentos que no matchean ni los inactivos', () => {
+  it('ignora descuentos que no matchean ni los inactivos → cae al manual', () => {
     const cat = [
       desc({ objetivo: 'producto', producto_id: 'otro', categoria: null, valor: 999 }),
       desc({ categoria: 'golosinas', valor: 999 }),
       desc({ categoria: 'bebidas', valor: 100, activo: false }),
     ]
-    expect(resolverDescuentoItem(item, null, cat)).toBe(0)
+    expect(resolverDescuento(item, 200, cat)).toEqual({ centavos: 200, origen: 'manual' })
   })
 })

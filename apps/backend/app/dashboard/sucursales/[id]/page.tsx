@@ -1,11 +1,13 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import { Store, Monitor } from 'lucide-react'
 import { getSession } from '@/src/lib/session'
 import { getDb } from '@/src/db'
 import { sucursales, puntos_venta, ventas } from '@/src/db/schema'
 import { and, eq, gte, sql } from 'drizzle-orm'
 import EditarSucursalForm from './_components/EditarSucursalForm'
 import NuevaCajaButton from './_components/NuevaCajaButton'
+import PageHeader from '../../_components/PageHeader'
 
 function formatPesos(centavos: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(centavos / 100)
@@ -45,33 +47,42 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6 text-sm">
-        <Link href="/dashboard" className="text-slate-500 hover:text-slate-300 transition-colors">Dashboard</Link>
-        <span className="text-slate-700">/</span>
-        <span className="text-slate-300">{suc.nombre}</span>
-      </div>
+      <PageHeader
+        Icon={Store}
+        title={suc.nombre}
+        subtitle={[suc.ciudad, suc.provincia].filter(Boolean).join(', ') || suc.direccion || undefined}
+        breadcrumb={[{ label: 'Dashboard', href: '/dashboard' }, { label: suc.nombre }]}
+        actions={
+          <span className={`text-xs px-3 py-1 rounded-full font-medium ${suc.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+            {suc.activo ? 'Activa' : 'Inactiva'}
+          </span>
+        }
+      />
 
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{suc.nombre}</h1>
-          {suc.ciudad && <p className="text-slate-400 text-sm mt-1">{suc.ciudad}{suc.provincia ? `, ${suc.provincia}` : ''}</p>}
-          {suc.direccion && <p className="text-slate-500 text-sm">{suc.direccion}</p>}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Ventas hoy</p>
+          <p className="text-2xl font-bold mt-1.5 text-emerald-400">{formatPesos(totalHoySucursal)}</p>
         </div>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium ${suc.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
-          {suc.activo ? 'Activa' : 'Inactiva'}
-        </span>
-      </div>
-
-      {/* Stat hoy total */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-8 inline-block min-w-48">
-        <p className="text-slate-400 text-xs mb-1">Ventas hoy (total sucursal)</p>
-        <p className="text-3xl font-bold text-white">{formatPesos(totalHoySucursal)}</p>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Cajas</p>
+          <p className="text-2xl font-bold mt-1.5 text-white">{cajas.length}</p>
+        </div>
+        {suc.direccion && (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 col-span-2 lg:col-span-1">
+            <p className="text-xs text-slate-500 uppercase tracking-wide">Dirección</p>
+            <p className="text-sm font-medium mt-1.5 text-slate-300">{suc.direccion}</p>
+          </div>
+        )}
       </div>
 
       {/* Cajas */}
-      <div className="mb-8">
+      <section className="mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-white">Cajas / Puntos de venta</h2>
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Monitor size={18} className="text-blue-400" /> Cajas / Puntos de venta
+          </h2>
           <NuevaCajaButton sucursalId={id} />
         </div>
 
@@ -106,13 +117,13 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Edit sucursal */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+      <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
         <h2 className="font-semibold text-white mb-5">Editar sucursal</h2>
         <EditarSucursalForm suc={{ id: suc.id, nombre: suc.nombre, direccion: suc.direccion, ciudad: suc.ciudad, provincia: suc.provincia }} />
-      </div>
+      </section>
     </div>
   )
 }

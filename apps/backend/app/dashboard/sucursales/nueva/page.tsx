@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Store } from 'lucide-react'
+import PageHeader from '../../_components/PageHeader'
 
 export default function NuevaSucursalPage() {
   const router = useRouter()
@@ -35,13 +37,12 @@ export default function NuevaSucursalPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-8 text-sm">
-        <Link href="/dashboard" className="text-slate-500 hover:text-slate-300 transition-colors">Dashboard</Link>
-        <span className="text-slate-700">/</span>
-        <span className="text-slate-300">Nueva sucursal</span>
-      </div>
-
-      <h1 className="text-2xl font-bold text-white mb-8">Nueva sucursal</h1>
+      <PageHeader
+        Icon={Store}
+        title="Nueva sucursal"
+        subtitle="Creá una sucursal para empezar a operar"
+        breadcrumb={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Nueva sucursal' }]}
+      />
 
       <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
         <div>
