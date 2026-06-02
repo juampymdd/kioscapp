@@ -9,6 +9,7 @@ import StockScreen from './screens/StockScreen'
 import ProveedoresScreen from './screens/ProveedoresScreen'
 import ReportesScreen from './screens/ReportesScreen'
 import VentasScreen from './screens/VentasScreen'
+import PromocionesScreen from './screens/PromocionesScreen'
 import Sidebar, { type ScreenId } from './components/Sidebar'
 import CerrarCaja from './screens/CerrarCaja'
 import ConfigScreen from './screens/ConfigScreen'
@@ -97,6 +98,7 @@ export default function App() {
           {screen === 'stock'       && <StockScreen />}
           {screen === 'proveedores' && <ProveedoresScreen />}
           {screen === 'ventas'      && <VentasScreen />}
+          {screen === 'promociones' && <PromocionesScreen />}
           {screen === 'reportes'    && <ReportesScreen />}
         </main>
       </div>

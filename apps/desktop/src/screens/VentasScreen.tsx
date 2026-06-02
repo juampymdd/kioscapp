@@ -94,6 +94,7 @@ export default function VentasScreen() {
         categoria:            i.categoria,
         subtotal_centavos:    i.subtotal_centavos,
         descuento_centavos:   i.descuento_centavos,
+        descuento_origen:     i.descuento_origen,
       })),
       total_centavos:          v.total_centavos,
       descuento_centavos:      v.descuento_centavos,

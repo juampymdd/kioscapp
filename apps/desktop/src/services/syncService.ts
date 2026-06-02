@@ -178,7 +178,7 @@ class SyncService {
         id: string; created_at: string; local_id: string; venta_id: string
         producto_id: string; descripcion: string; precio_unit_centavos: number
         categoria: string; cantidad: number; subtotal_centavos: number
-        descuento_centavos: number
+        descuento_centavos: number; descuento_origen: string | null
       }>
     } = await res.json()
 
@@ -203,13 +203,13 @@ class SyncService {
         `INSERT OR IGNORE INTO venta_items
            (id, created_at, local_id, sync_status, venta_id, producto_id,
             descripcion, precio_unit_centavos, categoria, cantidad,
-            subtotal_centavos, descuento_centavos)
-         VALUES ($1,$2,$3,'synced',$4,$5,$6,$7,$8,$9,$10,$11)`,
+            subtotal_centavos, descuento_centavos, descuento_origen)
+         VALUES ($1,$2,$3,'synced',$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
         [
           item.id, item.created_at, item.local_id, item.venta_id,
           item.producto_id, item.descripcion,
           item.precio_unit_centavos, item.categoria ?? 'varios', item.cantidad,
-          item.subtotal_centavos, item.descuento_centavos ?? 0,
+          item.subtotal_centavos, item.descuento_centavos ?? 0, item.descuento_origen ?? null,
         ],
       )
     }
@@ -217,18 +217,46 @@ class SyncService {
     return { ventas: data.ventas.length, items: data.venta_items.length }
   }
 
+  /** Empuja promos locales pendientes al central (scopeadas a la sucursal por el backend). */
+  async pushDescuentos(store: SqliteDataStore): Promise<number> {
+    if (!this.backendUrl || !this.syncSecret || this.localId === 'local-demo') return 0
+
+    const pendientes = await store.getDescuentosPendientes()
+    for (const d of pendientes) {
+      const res = await fetch(`${this.backendUrl}/api/puntos-venta/${this.localId}/descuentos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-sync-secret': this.syncSecret },
+        body: JSON.stringify(d),
+      })
+      if (res.ok) await store.marcarDescuentoSincronizado(d.id)
+    }
+    return pendientes.length
+  }
+
+  /** Baja el catálogo central, reconcilia (inactiva las que ya no vienen) y cachea sucursal_id. */
   async pullDescuentos(store: SqliteDataStore): Promise<number> {
     if (!this.backendUrl || !this.syncSecret || this.localId === 'local-demo') return 0
+
+    // Primero subir las locales pendientes, así vuelven en el pull ya como central.
+    await this.pushDescuentos(store)
 
     const res = await fetch(`${this.backendUrl}/api/puntos-venta/${this.localId}/descuentos`, {
       headers: { 'x-sync-secret': this.syncSecret },
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-    const data = await res.json() as { descuentos: import('@kioscapp/shared').Descuento[] }
-    for (const d of data.descuentos) {
-      await store.upsertDescuento(d)
+    const data = await res.json() as {
+      descuentos: import('@kioscapp/shared').Descuento[]
+      sucursal_id?: string
     }
+
+    if (data.sucursal_id) await store.setConfig('sucursal_id', data.sucursal_id)
+
+    for (const d of data.descuentos) {
+      await store.upsertDescuento({ ...d, origen: 'central', sync_status: 'synced' })
+    }
+    await store.reconciliarDescuentosCentral(data.descuentos.map(d => d.id))
+
     return data.descuentos.length
   }
 }

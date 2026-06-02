@@ -7,6 +7,7 @@ import { and, eq, gte, sql } from 'drizzle-orm'
 import RegenerarSecretButton from './_components/RegenerarSecretButton'
 import EditarCajaForm from './_components/EditarCajaForm'
 import PageHeader from '../../_components/PageHeader'
+import DashboardTabs from '../../_components/DashboardTabs'
 
 function formatPesos(centavos: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(centavos / 100)
@@ -80,121 +81,144 @@ export default async function DetalleCajaPage({ params }: { params: Promise<{ id
         }
       />
 
-      {/* Stats cards */}
-      <div className="grid md:grid-cols-3 gap-4 mb-8">
+      {/* KPIs (overview) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {[
-          { label: 'Ventas hoy', value: formatPesos(totalHoy) },
-          { label: 'Total últimos 30 días', value: formatPesos(totalMes) },
-          { label: 'Promedio diario', value: formatPesos(promedioDiario) },
+          { label: 'Ventas hoy', value: formatPesos(totalHoy), accent: 'text-emerald-400' },
+          { label: 'Total últimos 30 días', value: formatPesos(totalMes), accent: 'text-white' },
+          { label: 'Promedio diario', value: formatPesos(promedioDiario), accent: 'text-white' },
         ].map(s => (
-          <div key={s.label} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <p className="text-slate-400 text-xs mb-1">{s.label}</p>
-            <p className="text-2xl font-bold text-white">{s.value}</p>
+          <div key={s.label} className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <p className="text-slate-500 text-xs uppercase tracking-wide">{s.label}</p>
+            <p className={`text-2xl font-bold mt-1.5 tabular-nums ${s.accent}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid xl:grid-cols-2 gap-6 mb-8">
-        {/* Bar chart */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <h2 className="font-semibold text-white mb-5">Últimos 14 días</h2>
-          {porDia.length === 0 ? (
-            <p className="text-slate-500 text-sm py-8 text-center">Sin ventas aún</p>
-          ) : (
-            <div className="space-y-2">
-              {porDia.slice(0, 14).reverse().map(d => (
-                <div key={d.fecha} className="flex items-center gap-3 text-sm">
-                  <span className="text-slate-500 w-20 shrink-0 text-xs">
-                    {new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}
-                  </span>
-                  <div className="flex-1 bg-slate-800 rounded-full h-5 overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 rounded-full transition-all"
-                      style={{ width: `${Math.round(((d.total_centavos ?? 0) / maxDia) * 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-slate-300 w-28 text-right text-xs shrink-0">{formatPesos(d.total_centavos ?? 0)}</span>
+      <DashboardTabs
+        tabs={[
+          {
+            id: 'resumen',
+            label: 'Resumen',
+            panel: (
+              <div className="grid xl:grid-cols-2 gap-6">
+                {/* Bar chart */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                  <h2 className="font-semibold text-white mb-5">Últimos 14 días</h2>
+                  {porDia.length === 0 ? (
+                    <p className="text-slate-400 text-sm py-8 text-center">Sin ventas aún</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {porDia.slice(0, 14).reverse().map(d => (
+                        <div key={d.fecha} className="flex items-center gap-3 text-sm">
+                          <span className="text-slate-500 w-20 shrink-0 text-xs">
+                            {new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}
+                          </span>
+                          <div className="flex-1 bg-slate-800 rounded-full h-5 overflow-hidden">
+                            <div
+                              className="h-full bg-blue-600 rounded-full transition-all"
+                              style={{ width: `${Math.round((Number(d.total_centavos ?? 0) / maxDia) * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-slate-300 w-28 text-right text-xs shrink-0 tabular-nums">{formatPesos(Number(d.total_centavos ?? 0))}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Today breakdown by payment method */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <h2 className="font-semibold text-white mb-5">Hoy por medio de pago</h2>
-          {porMedioHoy.length === 0 ? (
-            <p className="text-slate-500 text-sm py-8 text-center">Sin ventas hoy</p>
-          ) : (
-            <div className="space-y-3">
-              {porMedioHoy.map(m => (
-                <div key={m.medio_pago} className="flex justify-between items-center">
-                  <span className="text-slate-300 text-sm capitalize">{m.medio_pago.replace('_', ' ')}</span>
-                  <div className="text-right">
-                    <p className="text-white font-semibold text-sm">{formatPesos(m.total_centavos ?? 0)}</p>
-                    <p className="text-slate-500 text-xs">{m.cantidad} transac.</p>
-                  </div>
+                {/* Today breakdown by payment method */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                  <h2 className="font-semibold text-white mb-5">Hoy por medio de pago</h2>
+                  {porMedioHoy.length === 0 ? (
+                    <p className="text-slate-400 text-sm py-8 text-center">Sin ventas hoy</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {porMedioHoy.map(m => (
+                        <div key={m.medio_pago} className="flex justify-between items-center">
+                          <span className="text-slate-300 text-sm capitalize">{m.medio_pago.replace('_', ' ')}</span>
+                          <div className="text-right">
+                            <p className="text-white font-semibold text-sm tabular-nums">{formatPesos(Number(m.total_centavos ?? 0))}</p>
+                            <p className="text-slate-500 text-xs">{m.cantidad} transac.</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+              </div>
+            ),
+          },
+          {
+            id: 'ventas',
+            label: 'Ventas',
+            panel: (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-800">
+                  <h2 className="font-semibold text-white">Últimas ventas</h2>
+                </div>
+                {ultimasVentas.length === 0 ? (
+                  <p className="text-slate-400 text-sm text-center py-16">Sin ventas registradas</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="text-slate-500 text-xs uppercase tracking-wide">
+                        <tr className="border-b border-slate-800 text-left">
+                          <th className="px-6 py-2.5 font-medium">Fecha</th>
+                          <th className="px-6 py-2.5 font-medium">Medio</th>
+                          <th className="px-6 py-2.5 font-medium text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/50">
+                        {ultimasVentas.map(v => (
+                          <tr key={v.id}>
+                            <td className="px-6 py-3 text-slate-400 whitespace-nowrap">
+                              {new Date(v.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td className="px-6 py-3 text-slate-300 capitalize">{v.medio_pago.replace('_', ' ')}</td>
+                            <td className="px-6 py-3 text-right text-white font-medium tabular-nums">{formatPesos(v.total_centavos)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            id: 'config',
+            label: 'Configuración',
+            panel: (
+              <div className="space-y-6">
+                {/* Credentials */}
+                <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                  <h2 className="font-semibold text-white mb-5">Credenciales de sincronización</h2>
+                  <div className="space-y-4 max-w-lg">
+                    <div>
+                      <p className="text-slate-400 text-xs mb-2 font-medium uppercase tracking-wider">Local ID</p>
+                      <code className="block bg-slate-800 text-blue-300 px-4 py-3 rounded-xl text-sm font-mono break-all">
+                        {pv.id}
+                      </code>
+                    </div>
+                    <div>
+                      <p className="text-slate-400 text-xs mb-2 font-medium uppercase tracking-wider">Sync Secret</p>
+                      <p className="text-slate-500 text-sm mb-3">El secret no se muestra por seguridad. Podés regenerarlo si lo necesitás.</p>
+                      <RegenerarSecretButton pvId={pv.id} />
+                    </div>
+                  </div>
+                </section>
 
-      {/* Recent sales table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-6">
-        <h2 className="font-semibold text-white mb-5">Últimas ventas</h2>
-        {ultimasVentas.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-8">Sin ventas registradas</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-800 text-left">
-                  <th className="text-slate-500 font-medium pb-3 pr-4">Fecha</th>
-                  <th className="text-slate-500 font-medium pb-3 pr-4">Medio</th>
-                  <th className="text-slate-500 font-medium pb-3 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {ultimasVentas.map(v => (
-                  <tr key={v.id}>
-                    <td className="py-3 pr-4 text-slate-400">
-                      {new Date(v.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="py-3 pr-4 text-slate-300 capitalize">{v.medio_pago.replace('_', ' ')}</td>
-                    <td className="py-3 text-right text-white font-medium">{formatPesos(v.total_centavos)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Credentials */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-6">
-        <h2 className="font-semibold text-white mb-5">Credenciales de sincronización</h2>
-        <div className="space-y-4 max-w-lg">
-          <div>
-            <p className="text-slate-400 text-xs mb-2 font-medium uppercase tracking-wider">Local ID</p>
-            <code className="block bg-slate-800 text-blue-300 px-4 py-3 rounded-xl text-sm font-mono break-all">
-              {pv.id}
-            </code>
-          </div>
-          <div>
-            <p className="text-slate-400 text-xs mb-2 font-medium uppercase tracking-wider">Sync Secret</p>
-            <p className="text-slate-500 text-sm mb-3">El secret no se muestra por seguridad. Podés regenerarlo si lo necesitás.</p>
-            <RegenerarSecretButton pvId={pv.id} />
-          </div>
-        </div>
-      </div>
-
-      {/* Edit caja */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-        <h2 className="font-semibold text-white mb-5">Editar caja</h2>
-        <EditarCajaForm pv={{ id: pv.id, nombre: pv.nombre }} />
-      </div>
+                {/* Edit caja */}
+                <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl">
+                  <h2 className="font-semibold text-white mb-5">Editar caja</h2>
+                  <EditarCajaForm pv={{ id: pv.id, nombre: pv.nombre }} />
+                </section>
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   )
 }
