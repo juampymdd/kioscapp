@@ -8,6 +8,7 @@ import { CATEGORIA_LABEL } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { useCartStore } from '../store/cartStore'
 import { formatCentavos } from '../lib/money'
+import Skeleton from './Skeleton'
 
 const CATEGORIA_ICONS: Record<CategoriaProducto, LucideIcon> = {
   cigarrillos:     Cigarette,
@@ -25,11 +26,12 @@ interface Props {
 
 export default function ProductGrid({ filtro }: Props) {
   const [productos, setProductos] = useState<Producto[]>([])
+  const [cargando, setCargando]   = useState(true)
   const [categoria, setCategoria] = useState<CategoriaProducto | null>(null)
   const addItem = useCartStore(s => s.addItem)
 
   useEffect(() => {
-    getDataStore().getProductos().then(setProductos)
+    getDataStore().getProductos().then(setProductos).finally(() => setCargando(false))
   }, [])
 
   // Categorías que realmente tienen productos
@@ -88,7 +90,15 @@ export default function ProductGrid({ filtro }: Props) {
 
       {/* Grid de productos */}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2 overflow-y-auto flex-1 pr-1 content-start auto-rows-min">
-        {filtrados.map(p => {
+        {cargando && Array.from({ length: 10 }).map((_, i) => (
+          <div key={`sk-${i}`} className="flex flex-col bg-slate-800/60 border border-slate-700 rounded-xl p-3 min-h-[7.5rem]">
+            <Skeleton className="w-9 h-9 rounded-lg mb-2 bg-slate-700" />
+            <Skeleton className="h-3.5 w-11/12 mb-1.5 bg-slate-700" />
+            <Skeleton className="h-3.5 w-2/3 bg-slate-700" />
+            <Skeleton className="h-4 w-1/2 mt-auto bg-slate-700" />
+          </div>
+        ))}
+        {!cargando && filtrados.map(p => {
           const Icon = CATEGORIA_ICONS[p.categoria] ?? Package
           return (
             <button
@@ -113,7 +123,7 @@ export default function ProductGrid({ filtro }: Props) {
             </button>
           )
         })}
-        {filtrados.length === 0 && (
+        {!cargando && filtrados.length === 0 && (
           <div className="col-span-full flex items-center justify-center py-12 text-slate-400 text-sm">
             {q || categoria ? 'Sin resultados' : 'Sin productos'}
           </div>

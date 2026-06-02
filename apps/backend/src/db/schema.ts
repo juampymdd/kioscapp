@@ -81,6 +81,7 @@ export const venta_items = pgTable('venta_items', {
   subtotal_centavos:    integer('subtotal_centavos').notNull(),
   descuento_centavos:   integer('descuento_centavos').notNull().default(0),
   descuento_origen:     text('descuento_origen'),
+  descuento_detalle:    text('descuento_detalle'),
 }, t => [
   index('idx_venta_items_venta').on(t.venta_id),
 ])

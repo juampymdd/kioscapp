@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Zap, RefreshCw, BarChart3, type LucideIcon } from 'lucide-react'
+import Logo, { BrandMark } from './_components/Logo'
 
 const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   {
@@ -24,7 +25,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Nav */}
       <nav className="border-b border-slate-800 px-6 py-4 flex justify-between items-center max-w-6xl mx-auto">
-        <span className="text-xl font-bold text-blue-400">KioscApp</span>
+        <Logo href="/" markSize={30} textClass="text-xl" />
         <div className="flex gap-4 items-center">
           <Link href="/auth/login" className="text-slate-300 hover:text-white text-sm transition-colors">
             Ingresar
@@ -103,8 +104,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 px-6 py-8 text-center text-slate-500 text-sm">
-        <span className="text-blue-400 font-semibold">KioscApp</span> — Sistema POS offline-first para comercios argentinos
+      <footer className="border-t border-slate-800 px-6 py-8 flex items-center justify-center gap-2 text-slate-500 text-sm">
+        <BrandMark size={18} />
+        <span><span className="text-white font-semibold">KioscApp</span> — Sistema POS offline-first para comercios argentinos</span>
       </footer>
     </div>
   )

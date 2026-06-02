@@ -53,4 +53,6 @@ export interface VentaItem {
   descuento_centavos: number
   /** Origen del descuento congelado: 'promo' (catálogo) | 'manual' | null. */
   descuento_origen: 'promo' | 'manual' | null
+  /** Detalle del tipo congelado (ej '10%'); null si monto fijo o sin descuento. */
+  descuento_detalle: string | null
 }

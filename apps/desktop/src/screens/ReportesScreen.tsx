@@ -4,6 +4,7 @@ import type { Venta } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos } from '../lib/money'
 import ScreenHeader from '../components/ScreenHeader'
+import Skeleton from '../components/Skeleton'
 
 const MEDIO_LABEL: Record<string, string> = {
   efectivo:        'Efectivo',
@@ -26,15 +27,18 @@ function addDays(dateStr: string, days: number): string {
 export default function ReportesScreen() {
   const [ventasHoy, setVentasHoy] = useState<Venta[]>([])
   const [ventasSemana, setVentasSemana] = useState<Venta[]>([])
+  const [cargando, setCargando] = useState(true)
 
   const hoy = fechaLocal(new Date().toISOString())
 
   useEffect(() => {
     const store = getDataStore()
-    store.getVentasDia(new Date().toISOString()).then(setVentasHoy)
     const hace7 = addDays(hoy, -6) + 'T00:00:00.000Z'
     const manana = addDays(hoy, 1) + 'T00:00:00.000Z'
-    store.getVentasRango(hace7, manana).then(setVentasSemana)
+    Promise.all([
+      store.getVentasDia(new Date().toISOString()).then(setVentasHoy),
+      store.getVentasRango(hace7, manana).then(setVentasSemana),
+    ]).finally(() => setCargando(false))
   }, [hoy])
 
   // ── Resumen de hoy ────────────────────────────────────────────────────────
@@ -67,6 +71,41 @@ export default function ReportesScreen() {
         subtitle="Resumen de hoy y tendencia de los últimos 7 días"
       />
       <div className="flex-1 overflow-y-auto">
+        {cargando ? (
+          <div className="max-w-3xl mx-auto w-full p-6 space-y-8">
+            <section>
+              <Skeleton className="h-6 w-64 mb-4 bg-slate-800" />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
+                  <Skeleton className="h-3 w-24 mb-2 bg-slate-800" />
+                  <Skeleton className="h-8 w-32 bg-slate-800" />
+                </div>
+                <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
+                  <Skeleton className="h-3 w-24 mb-2 bg-slate-800" />
+                  <Skeleton className="h-8 w-16 bg-slate-800" />
+                </div>
+              </div>
+              <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex justify-between">
+                    <Skeleton className="h-4 w-28 bg-slate-800" />
+                    <Skeleton className="h-4 w-20 bg-slate-800" />
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section>
+              <Skeleton className="h-6 w-40 mb-4 bg-slate-800" />
+              <div className="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <div className="flex items-end gap-2 h-32">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <Skeleton key={i} className="flex-1 bg-slate-800" style={{ height: `${30 + (i * 9) % 60}%` }} />
+                  ))}
+                </div>
+              </div>
+            </section>
+          </div>
+        ) : (
         <div className="max-w-3xl mx-auto w-full p-6 space-y-8">
 
         {/* Hoy */}
@@ -182,6 +221,7 @@ export default function ReportesScreen() {
         </section>
 
         </div>
+        )}
       </div>
     </div>
   )

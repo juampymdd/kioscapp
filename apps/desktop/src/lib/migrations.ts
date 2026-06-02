@@ -162,6 +162,12 @@ export const migrations = [
     `,
   },
   {
+    description: 'venta_items: detalle del descuento (ej 10%) — Fase 3',
+    sql: `
+      ALTER TABLE venta_items ADD COLUMN descuento_detalle TEXT;
+    `,
+  },
+  {
     description: 'descuentos: origen (central/local) + sync_status — Fase 3',
     sql: `
       ALTER TABLE descuentos ADD COLUMN origen TEXT NOT NULL DEFAULT 'central';

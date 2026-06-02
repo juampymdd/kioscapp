@@ -15,6 +15,13 @@ export interface DescuentoResuelto {
   centavos: number
   /** De dónde sale el descuento, o null si no hay. */
   origen: OrigenDescuento | null
+  /** Detalle legible del tipo (ej '10%'); null si es monto fijo. */
+  detalle: string | null
+}
+
+/** Etiqueta del tipo de descuento: '10%' para porcentaje, null para monto fijo. */
+export function detalleDescuento(d: Descuento): string | null {
+  return d.tipo === 'porcentaje' ? `${d.valor}%` : null
 }
 
 /** Centavos a descontar para un descuento dado, clampeado al subtotal. */
@@ -53,12 +60,16 @@ export function resolverDescuento(
     .sort((a, b) => rank(b) - rank(a))[0]
 
   if (promo) {
-    return { centavos: calcularDescuento(promo, item.subtotal_centavos), origen: 'promo' }
+    return {
+      centavos: calcularDescuento(promo, item.subtotal_centavos),
+      origen: 'promo',
+      detalle: detalleDescuento(promo),
+    }
   }
 
   if (manual_centavos !== null) {
-    return { centavos: Math.max(0, Math.min(manual_centavos, item.subtotal_centavos)), origen: 'manual' }
+    return { centavos: Math.max(0, Math.min(manual_centavos, item.subtotal_centavos)), origen: 'manual', detalle: null }
   }
 
-  return { centavos: 0, origen: null }
+  return { centavos: 0, origen: null, detalle: null }
 }

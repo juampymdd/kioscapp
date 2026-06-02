@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Store } from 'lucide-react'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
 import MoneyInput from '../components/MoneyInput'
+import BrandMark from '../components/BrandMark'
 
 export default function AbrirCaja() {
   const { setCajaActiva } = useCajaStore()
@@ -55,7 +55,7 @@ export default function AbrirCaja() {
     <div className="flex h-full items-center justify-center bg-slate-950">
       <div className="w-full max-w-sm bg-slate-900 rounded-2xl p-8 shadow-2xl border border-slate-700">
         <div className="text-center mb-8">
-          <Store size={48} className="mx-auto mb-3 text-blue-400" />
+          <BrandMark size={56} className="mx-auto mb-3" />
           <h1 className="text-2xl font-bold text-white">KioscApp</h1>
           <p className="text-slate-400 mt-1">Apertura de caja</p>
         </div>

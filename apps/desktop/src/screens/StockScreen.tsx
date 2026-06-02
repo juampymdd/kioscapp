@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle, Plus, Boxes } from 'lucide-react'
 import type { Producto, Stock } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import ScreenHeader from '../components/ScreenHeader'
+import Skeleton from '../components/Skeleton'
 
 interface Row {
   producto: Producto
@@ -14,18 +15,23 @@ interface Row {
 
 export default function StockScreen() {
   const [rows, setRows] = useState<Row[]>([])
+  const [cargando, setCargando] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [guardando, setGuardando] = useState<string | null>(null)
 
   async function cargar() {
-    const data = await getDataStore().getProductosConStock()
-    setRows(data.map(({ producto, stock }) => ({
-      producto,
-      stock,
-      editCantidad: stock ? String(stock.cantidad) : '0',
-      editAlerta: stock ? String(stock.alerta_minimo) : '5',
-      dirty: false,
-    })))
+    try {
+      const data = await getDataStore().getProductosConStock()
+      setRows(data.map(({ producto, stock }) => ({
+        producto,
+        stock,
+        editCantidad: stock ? String(stock.cantidad) : '0',
+        editAlerta: stock ? String(stock.alerta_minimo) : '5',
+        dirty: false,
+      })))
+    } finally {
+      setCargando(false)
+    }
   }
 
   useEffect(() => { cargar() }, [])
@@ -91,7 +97,16 @@ export default function StockScreen() {
             </tr>
           </thead>
           <tbody>
-            {filtradas.map(row => {
+            {cargando && Array.from({ length: 8 }).map((_, i) => (
+              <tr key={`sk-${i}`} className="border-b border-slate-800">
+                <td className="px-4 py-2.5"><Skeleton className="h-4 w-44 bg-slate-700" /></td>
+                <td className="px-4 py-2.5"><Skeleton className="h-8 w-32 mx-auto rounded-lg bg-slate-700" /></td>
+                <td className="px-4 py-2.5"><Skeleton className="h-8 w-20 mx-auto rounded bg-slate-700" /></td>
+                <td className="px-4 py-2.5"><Skeleton className="h-5 w-14 mx-auto rounded-full bg-slate-700" /></td>
+                <td className="px-4 py-2.5"></td>
+              </tr>
+            ))}
+            {!cargando && filtradas.map(row => {
               const cant = parseFloat(row.editCantidad.replace(',', '.')) || 0
               const alerta = parseFloat(row.editAlerta.replace(',', '.')) || 0
               const bajo = cant <= alerta

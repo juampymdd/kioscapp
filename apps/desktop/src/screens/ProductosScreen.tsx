@@ -4,6 +4,7 @@ import type { CategoriaProducto, Producto } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos, parseCentavos, centavosToInputStr } from '../lib/money'
 import ScreenHeader from '../components/ScreenHeader'
+import Skeleton from '../components/Skeleton'
 
 const CATEGORIAS: CategoriaProducto[] = [
   'bebidas', 'golosinas', 'cigarrillos', 'kiosco',
@@ -33,6 +34,7 @@ function emptyProducto(): Producto {
 
 export default function ProductosScreen() {
   const [productos, setProductos] = useState<Producto[]>([])
+  const [cargando, setCargando] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [mostrarInactivos, setMostrarInactivos] = useState(false)
   const [editando, setEditando] = useState<Producto | null>(null)
@@ -40,8 +42,12 @@ export default function ProductosScreen() {
   const [guardando, setGuardando] = useState(false)
 
   async function cargar() {
-    const todos = await getDataStore().getAllProductos()
-    setProductos(todos)
+    try {
+      const todos = await getDataStore().getAllProductos()
+      setProductos(todos)
+    } finally {
+      setCargando(false)
+    }
   }
 
   useEffect(() => { cargar() }, [])
@@ -144,7 +150,16 @@ export default function ProductosScreen() {
               </tr>
             </thead>
             <tbody>
-              {filtrados.map(p => (
+              {cargando && Array.from({ length: 8 }).map((_, i) => (
+                <tr key={`sk-${i}`} className="border-b border-slate-800">
+                  <td className="px-4 py-2.5"><Skeleton className="h-4 w-40 bg-slate-700" /></td>
+                  <td className="px-4 py-2.5"><Skeleton className="h-4 w-20 bg-slate-700" /></td>
+                  <td className="px-4 py-2.5"><Skeleton className="h-4 w-16 ml-auto bg-slate-700" /></td>
+                  <td className="px-4 py-2.5"><Skeleton className="h-4 w-24 bg-slate-700" /></td>
+                  <td className="px-4 py-2.5"><Skeleton className="h-5 w-16 mx-auto rounded-full bg-slate-700" /></td>
+                </tr>
+              ))}
+              {!cargando && filtrados.map(p => (
                 <tr
                   key={p.id}
                   onClick={() => seleccionar(p)}
@@ -167,7 +182,7 @@ export default function ProductosScreen() {
                   </td>
                 </tr>
               ))}
-              {filtrados.length === 0 && (
+              {!cargando && filtrados.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
                     {busqueda ? `Sin resultados para "${busqueda}"` : 'Sin productos'}

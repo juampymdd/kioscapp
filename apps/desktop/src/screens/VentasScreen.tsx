@@ -5,6 +5,7 @@ import { getDataStore } from '../store/dataStore'
 import { formatCentavos } from '../lib/money'
 import TicketModal from '../components/TicketModal'
 import ScreenHeader from '../components/ScreenHeader'
+import Skeleton from '../components/Skeleton'
 import type { DatosTicket } from '../lib/ticket'
 
 const PAGE_SIZE = 20
@@ -48,6 +49,11 @@ function rangoParaPeriodo(p: Periodo, desde: string, hasta: string): [string, st
       return [d.toISOString(), addDays(h, 1).toISOString()]
     }
   }
+}
+
+/** Cantidad sin drift de float: entero tal cual, fraccional a máx 3 decimales sin ceros. */
+function fmtCant(n: number): string {
+  return Number.isInteger(n) ? String(n) : String(parseFloat(n.toFixed(3)))
 }
 
 function formatFechaHora(iso: string) {
@@ -95,6 +101,7 @@ export default function VentasScreen() {
         subtotal_centavos:    i.subtotal_centavos,
         descuento_centavos:   i.descuento_centavos,
         descuento_origen:     i.descuento_origen,
+        descuento_detalle:    i.descuento_detalle,
       })),
       total_centavos:          v.total_centavos,
       descuento_centavos:      v.descuento_centavos,
@@ -228,9 +235,23 @@ export default function VentasScreen() {
 
       {/* Tabla */}
       <div className="flex-1 overflow-y-auto">
-        {filtradas.length === 0 ? (
+        {loading ? (
+          <table className="w-full text-sm">
+            <tbody>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <tr key={`sk-${i}`} className="border-b border-slate-800/50">
+                  <td className="px-4 py-3 w-8"><Skeleton className="h-3.5 w-3.5 bg-slate-700" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-32 bg-slate-700" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full bg-slate-700" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-6 ml-auto bg-slate-700" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-20 ml-auto bg-slate-700" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : filtradas.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-slate-600">
-            {loading ? 'Cargando…' : 'Sin ventas en el período seleccionado'}
+            Sin ventas en el período seleccionado
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -297,7 +318,7 @@ export default function VentasScreen() {
                               {itemsMap[v.id].map(it => (
                                 <tr key={it.id}>
                                   <td className="py-1.5 text-slate-300">{it.descripcion}</td>
-                                  <td className="py-1.5 text-right text-slate-400">{it.cantidad}</td>
+                                  <td className="py-1.5 text-right text-slate-400">{fmtCant(it.cantidad)}</td>
                                   <td className="py-1.5 text-right text-slate-400 font-mono">{formatCentavos(it.precio_unit_centavos)}</td>
                                   <td className="py-1.5 text-right text-white font-mono">{formatCentavos(it.subtotal_centavos)}</td>
                                 </tr>

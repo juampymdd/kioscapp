@@ -130,6 +130,7 @@ function mapVentaItem(r: Row): VentaItem {
     subtotal_centavos: r.subtotal_centavos as number,
     descuento_centavos: (r.descuento_centavos as number) ?? 0,
     descuento_origen: (r.descuento_origen as VentaItem['descuento_origen']) ?? null,
+    descuento_detalle: (r.descuento_detalle as string | null) ?? null,
   }
 }
 
@@ -257,13 +258,13 @@ export class SqliteDataStore implements DataStore {
         `INSERT INTO venta_items
            (id, created_at, local_id, sync_status, venta_id, producto_id,
             descripcion, precio_unit_centavos, categoria, cantidad,
-            subtotal_centavos, descuento_centavos, descuento_origen)
-         VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+            subtotal_centavos, descuento_centavos, descuento_origen, descuento_detalle)
+         VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         [
           item.id, item.created_at, item.local_id, item.venta_id,
           item.producto_id, item.descripcion, item.precio_unit_centavos,
           item.categoria, item.cantidad, item.subtotal_centavos,
-          item.descuento_centavos, item.descuento_origen,
+          item.descuento_centavos, item.descuento_origen, item.descuento_detalle,
         ],
       )
     }

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Skeleton from '../_components/Skeleton'
 
 type Descuento = {
   id: string; sucursal_id: string | null; objetivo: 'producto' | 'categoria'
@@ -13,6 +14,7 @@ const CATEGORIAS = ['cigarrillos', 'bebidas', 'golosinas', 'kiosco', 'recarga_su
 
 export default function DescuentosPage() {
   const [items, setItems] = useState<Descuento[]>([])
+  const [cargando, setCargando] = useState(true)
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
   const [form, setForm] = useState({
@@ -21,7 +23,11 @@ export default function DescuentosPage() {
   })
 
   async function cargar() {
-    const r = await fetch('/api/descuentos'); setItems(await r.json())
+    try {
+      const r = await fetch('/api/descuentos'); setItems(await r.json())
+    } finally {
+      setCargando(false)
+    }
   }
   useEffect(() => {
     cargar()

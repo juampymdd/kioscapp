@@ -3,6 +3,7 @@ import { Plus, X, Save, Trash2, Truck } from 'lucide-react'
 import type { Proveedor } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import ScreenHeader from '../components/ScreenHeader'
+import Skeleton from '../components/Skeleton'
 
 const LOCAL_ID = import.meta.env.VITE_LOCAL_ID ?? 'local-demo'
 
@@ -25,11 +26,16 @@ function emptyProveedor(): Proveedor {
 
 export default function ProveedoresScreen() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
+  const [cargando, setCargando] = useState(true)
   const [editando, setEditando] = useState<Proveedor | null>(null)
   const [guardando, setGuardando] = useState(false)
 
   async function cargar() {
-    setProveedores(await getDataStore().getProveedores())
+    try {
+      setProveedores(await getDataStore().getProveedores())
+    } finally {
+      setCargando(false)
+    }
   }
 
   useEffect(() => { cargar() }, [])
@@ -88,7 +94,17 @@ export default function ProveedoresScreen() {
         </ScreenHeader>
 
         <div className="flex-1 overflow-y-auto">
-          {proveedores.length === 0 ? (
+          {cargando ? (
+            <div className="divide-y divide-slate-800">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={`sk-${i}`} className="flex gap-6 px-4 py-3">
+                  <Skeleton className="h-4 w-40 bg-slate-700" />
+                  <Skeleton className="h-4 w-28 bg-slate-700" />
+                  <Skeleton className="h-4 w-48 bg-slate-700" />
+                </div>
+              ))}
+            </div>
+          ) : proveedores.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-500">
               <p className="text-sm">No hay proveedores cargados</p>
               <button

@@ -179,6 +179,7 @@ class SyncService {
         producto_id: string; descripcion: string; precio_unit_centavos: number
         categoria: string; cantidad: number; subtotal_centavos: number
         descuento_centavos: number; descuento_origen: string | null
+        descuento_detalle: string | null
       }>
     } = await res.json()
 
@@ -203,13 +204,14 @@ class SyncService {
         `INSERT OR IGNORE INTO venta_items
            (id, created_at, local_id, sync_status, venta_id, producto_id,
             descripcion, precio_unit_centavos, categoria, cantidad,
-            subtotal_centavos, descuento_centavos, descuento_origen)
-         VALUES ($1,$2,$3,'synced',$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+            subtotal_centavos, descuento_centavos, descuento_origen, descuento_detalle)
+         VALUES ($1,$2,$3,'synced',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         [
           item.id, item.created_at, item.local_id, item.venta_id,
           item.producto_id, item.descripcion,
           item.precio_unit_centavos, item.categoria ?? 'varios', item.cantidad,
           item.subtotal_centavos, item.descuento_centavos ?? 0, item.descuento_origen ?? null,
+          item.descuento_detalle ?? null,
         ],
       )
     }

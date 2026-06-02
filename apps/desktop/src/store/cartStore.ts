@@ -8,10 +8,14 @@ export interface CartItem {
   subtotal_centavos: number
   /** Descuento manual fijado por el cajero (centavos). null = sin override manual. */
   descuentoManual_centavos: number | null
+  /** Detalle del manual (ej '10%'); null si fue monto fijo. */
+  descuentoManual_detalle: string | null
   /** Descuento efectivo resuelto (promo o manual), congelable al vender. */
   descuento_centavos: number
   /** Origen del descuento efectivo: 'promo' (catálogo) | 'manual' | null. */
   descuento_origen: OrigenDescuento | null
+  /** Detalle del tipo efectivo (ej '10%'); null si monto fijo o sin descuento. */
+  descuento_detalle: string | null
 }
 
 interface CartStore {
@@ -21,7 +25,7 @@ interface CartStore {
   addItem: (producto: Producto, cantidad?: number) => void
   removeItem: (productoId: string) => void
   updateCantidad: (productoId: string, cantidad: number) => void
-  setDescuentoManualItem: (productoId: string, centavos: number | null) => void
+  setDescuentoManualItem: (productoId: string, centavos: number | null, detalle?: string | null) => void
   setDescuento: (centavos: number) => void
   setCatalogo: (catalogo: Descuento[]) => void
   clear: () => void
@@ -30,15 +34,20 @@ interface CartStore {
   total: () => number
 }
 
-/** Recalcula subtotal y descuento efectivo (con origen) de un ítem. */
+/** Recalcula subtotal y descuento efectivo (con origen + detalle) de un ítem. */
 function recalcItem(item: CartItem, catalogo: Descuento[]): CartItem {
-  const subtotal_centavos = Math.floor(item.cantidad * item.producto.precio_centavos)
-  const { centavos, origen } = resolverDescuento(
+  // Redondear a 3 decimales evita el drift de float del stepper (0.1 + 0.1 + ...).
+  const cantidad = Math.round(item.cantidad * 1000) / 1000
+  item = { ...item, cantidad }
+  const subtotal_centavos = Math.floor(cantidad * item.producto.precio_centavos)
+  const { centavos, origen, detalle } = resolverDescuento(
     { producto_id: item.producto.id, categoria: item.producto.categoria, subtotal_centavos },
     item.descuentoManual_centavos,
     catalogo,
   )
-  return { ...item, subtotal_centavos, descuento_centavos: centavos, descuento_origen: origen }
+  // El detalle del manual lo aporta el carrito (resolver no conoce el modo %/$).
+  const descuento_detalle = origen === 'manual' ? item.descuentoManual_detalle : detalle
+  return { ...item, subtotal_centavos, descuento_centavos: centavos, descuento_origen: origen, descuento_detalle }
 }
 
 /** ¿El ítem tiene una promo de catálogo aplicada? (manual queda bloqueado) */
@@ -59,7 +68,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
             ? recalcItem({ ...i, cantidad: i.cantidad + cantidad }, state.catalogo)
             : i)
         : [...state.items, recalcItem(
-            { producto, cantidad, subtotal_centavos: 0, descuentoManual_centavos: null, descuento_centavos: 0, descuento_origen: null },
+            { producto, cantidad, subtotal_centavos: 0, descuentoManual_centavos: null, descuentoManual_detalle: null, descuento_centavos: 0, descuento_origen: null, descuento_detalle: null },
             state.catalogo,
           )]
       return { items }
@@ -78,11 +87,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }))
   },
 
-  setDescuentoManualItem(productoId, centavos) {
+  setDescuentoManualItem(productoId, centavos, detalle = null) {
     set(state => ({
       items: state.items.map(i =>
         i.producto.id === productoId
-          ? recalcItem({ ...i, descuentoManual_centavos: centavos }, state.catalogo)
+          ? recalcItem({ ...i, descuentoManual_centavos: centavos, descuentoManual_detalle: detalle }, state.catalogo)
           : i),
     }))
   },

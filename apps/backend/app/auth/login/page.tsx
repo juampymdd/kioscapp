@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Logo from '../../_components/Logo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -34,9 +35,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <Link href="/" className="block text-center text-blue-400 font-bold text-2xl mb-8">
-          KioscApp
-        </Link>
+        <div className="flex justify-center mb-8">
+          <Logo href="/" markSize={34} textClass="text-2xl" />
+        </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
           <h1 className="text-xl font-bold text-white mb-6">Ingresar</h1>

@@ -1,8 +1,9 @@
 import {
-  ShoppingCart, Package, Boxes, Truck, BarChart2, LogOut, Store, Settings, Receipt, Tag,
+  ShoppingCart, Package, Boxes, Truck, BarChart2, LogOut, Settings, Receipt, Tag,
   type LucideIcon,
 } from 'lucide-react'
 import type { Caja } from '@kioscapp/shared'
+import BrandMark from './BrandMark'
 
 export type ScreenId = 'pos' | 'productos' | 'stock' | 'proveedores' | 'ventas' | 'reportes' | 'promociones'
 
@@ -35,7 +36,7 @@ export default function Sidebar({ currentScreen, onNavigate, cajaActiva, onCerra
     <aside className="w-14 shrink-0 flex flex-col bg-slate-900 border-r border-slate-800">
       {/* Logo */}
       <div className="flex items-center justify-center h-12 border-b border-slate-800">
-        <Store size={20} className="text-blue-400" />
+        <BrandMark size={28} />
       </div>
 
       {/* Nav items */}

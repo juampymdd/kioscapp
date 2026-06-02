@@ -5,10 +5,12 @@ import { CATEGORIA_LABEL, CATEGORIA_ORDEN } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { useCartStore } from '../store/cartStore'
 import ScreenHeader from '../components/ScreenHeader'
+import Skeleton from '../components/Skeleton'
 import { formatCentavos } from '../lib/money'
 
 export default function PromocionesScreen() {
   const [promos, setPromos]       = useState<Descuento[]>([])
+  const [cargando, setCargando]   = useState(true)
   const [productos, setProductos] = useState<Producto[]>([])
   const [mostrarForm, setMostrarForm] = useState(false)
 
@@ -19,7 +21,11 @@ export default function PromocionesScreen() {
   const [valor, setValor]         = useState('10')
 
   async function cargar() {
-    setPromos(await getDataStore().getDescuentos())
+    try {
+      setPromos(await getDataStore().getDescuentos())
+    } finally {
+      setCargando(false)
+    }
   }
   useEffect(() => {
     cargar()
@@ -143,7 +149,19 @@ export default function PromocionesScreen() {
         )}
 
         {/* Listado */}
-        {promos.length === 0 ? (
+        {cargando ? (
+          <div className="divide-y divide-slate-800/60">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={`sk-${i}`} className="flex items-center gap-4 py-2.5">
+                <Skeleton className="h-4 w-40 bg-slate-800" />
+                <Skeleton className="h-4 w-16 bg-slate-800" />
+                <Skeleton className="h-4 w-20 bg-slate-800" />
+                <Skeleton className="h-5 w-12 rounded-full bg-slate-800" />
+                <Skeleton className="h-4 w-14 bg-slate-800" />
+              </div>
+            ))}
+          </div>
+        ) : promos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-500">
             <Tag size={40} className="mb-2 text-slate-700" />
             <p className="text-sm">Sin promociones. Creá una o cargalas desde la web.</p>

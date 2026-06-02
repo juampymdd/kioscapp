@@ -13,11 +13,12 @@ function CartRow({ item }: { item: CartItem }) {
 
   function aplicar() {
     const n = Number(valor)
-    if (!Number.isFinite(n) || n <= 0) { setDescuentoManualItem(item.producto.id, null); setEditando(false); return }
+    if (!Number.isFinite(n) || n <= 0) { setDescuentoManualItem(item.producto.id, null, null); setEditando(false); return }
     const centavos = modo === 'porcentaje'
       ? Math.floor((item.subtotal_centavos * n) / 100)
       : Math.round(n * 100)
-    setDescuentoManualItem(item.producto.id, centavos)
+    const detalle = modo === 'porcentaje' ? `${n}%` : null
+    setDescuentoManualItem(item.producto.id, centavos, detalle)
     setEditando(false); setValor('')
   }
 
@@ -90,8 +91,8 @@ function CartRow({ item }: { item: CartItem }) {
       {item.descuento_centavos > 0 && (
         <div className="flex justify-end items-center gap-1.5 text-amber-400 text-xs tabular-nums">
           {esPromo
-            ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300"><Tag size={11} /> Promo</span>
-            : <span className="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">Manual</span>}
+            ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300"><Tag size={11} /> Promo{item.descuento_detalle ? ` ${item.descuento_detalle}` : ''}</span>
+            : <span className="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">Manual{item.descuento_detalle ? ` ${item.descuento_detalle}` : ''}</span>}
           − {formatCentavos(item.descuento_centavos)}
         </div>
       )}
