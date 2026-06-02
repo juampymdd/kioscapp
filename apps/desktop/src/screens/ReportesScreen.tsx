@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { BarChart2 } from 'lucide-react'
 import type { Venta } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos } from '../lib/money'
+import ScreenHeader from '../components/ScreenHeader'
 
 const MEDIO_LABEL: Record<string, string> = {
   efectivo:        'Efectivo',
@@ -58,8 +60,14 @@ export default function ReportesScreen() {
   const maxDia = Math.max(1, ...Object.values(porDia).map(d => d.total))
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 overflow-y-auto">
-      <div className="max-w-3xl mx-auto w-full p-6 space-y-8">
+    <div className="flex flex-col h-full bg-slate-950">
+      <ScreenHeader
+        Icon={BarChart2}
+        title="Reportes"
+        subtitle="Resumen de hoy y tendencia de los últimos 7 días"
+      />
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto w-full p-6 space-y-8">
 
         {/* Hoy */}
         <section>
@@ -173,6 +181,7 @@ export default function ReportesScreen() {
           </div>
         </section>
 
+        </div>
       </div>
     </div>
   )

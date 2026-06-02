@@ -91,6 +91,7 @@ class SyncService {
       console.log('[sync] pendientes:', pendientes.map(p => `${p.tabla}(${p.ids.length})`).join(', ') || 'ninguno')
 
       if (totalPending === 0) {
+        try { await this.pullDescuentos(store) } catch (e) { console.warn('[sync] pull descuentos falló:', e) }
         this.setState({ status: 'ok', pendingCount: 0, lastSync: new Date(), lastError: null })
         this.running = false
         return
@@ -121,6 +122,8 @@ class SyncService {
       for (const { tabla, ids } of pendientes) {
         await store.marcarSincronizado(tabla, ids)
       }
+
+      try { await this.pullDescuentos(store) } catch (e) { console.warn('[sync] pull descuentos falló:', e) }
 
       this.setState({ status: 'ok', pendingCount: 0, lastSync: new Date(), lastError: null })
     } catch (err) {
@@ -174,7 +177,8 @@ class SyncService {
       venta_items: Array<{
         id: string; created_at: string; local_id: string; venta_id: string
         producto_id: string; descripcion: string; precio_unit_centavos: number
-        cantidad: number; subtotal_centavos: number
+        categoria: string; cantidad: number; subtotal_centavos: number
+        descuento_centavos: number
       }>
     } = await res.json()
 
@@ -198,17 +202,34 @@ class SyncService {
       await store.db.execute(
         `INSERT OR IGNORE INTO venta_items
            (id, created_at, local_id, sync_status, venta_id, producto_id,
-            descripcion, precio_unit_centavos, cantidad, subtotal_centavos)
-         VALUES ($1,$2,$3,'synced',$4,$5,$6,$7,$8,$9)`,
+            descripcion, precio_unit_centavos, categoria, cantidad,
+            subtotal_centavos, descuento_centavos)
+         VALUES ($1,$2,$3,'synced',$4,$5,$6,$7,$8,$9,$10,$11)`,
         [
           item.id, item.created_at, item.local_id, item.venta_id,
           item.producto_id, item.descripcion,
-          item.precio_unit_centavos, item.cantidad, item.subtotal_centavos,
+          item.precio_unit_centavos, item.categoria ?? 'varios', item.cantidad,
+          item.subtotal_centavos, item.descuento_centavos ?? 0,
         ],
       )
     }
 
     return { ventas: data.ventas.length, items: data.venta_items.length }
+  }
+
+  async pullDescuentos(store: SqliteDataStore): Promise<number> {
+    if (!this.backendUrl || !this.syncSecret || this.localId === 'local-demo') return 0
+
+    const res = await fetch(`${this.backendUrl}/api/puntos-venta/${this.localId}/descuentos`, {
+      headers: { 'x-sync-secret': this.syncSecret },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+    const data = await res.json() as { descuentos: import('@kioscapp/shared').Descuento[] }
+    for (const d of data.descuentos) {
+      await store.upsertDescuento(d)
+    }
+    return data.descuentos.length
   }
 }
 

@@ -111,6 +111,13 @@ export const migrations = [
     `,
   },
   {
+    description: 'venta_items: categoria + descuento congelados — Fase 3',
+    sql: `
+      ALTER TABLE venta_items ADD COLUMN categoria TEXT NOT NULL DEFAULT 'varios';
+      ALTER TABLE venta_items ADD COLUMN descuento_centavos INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
+  {
     description: 'Tabla proveedores — Fase 2',
     sql: `
       CREATE TABLE IF NOT EXISTS proveedores (
@@ -127,6 +134,25 @@ export const migrations = [
         deleted_at   TEXT
       );
       CREATE INDEX IF NOT EXISTS idx_proveedores_activo ON proveedores(activo);
+    `,
+  },
+  {
+    description: 'Tabla descuentos local — Fase 3',
+    sql: `
+      CREATE TABLE IF NOT EXISTS descuentos (
+        id           TEXT PRIMARY KEY,
+        user_id      TEXT NOT NULL DEFAULT '',
+        sucursal_id  TEXT,
+        objetivo     TEXT NOT NULL,
+        producto_id  TEXT,
+        categoria    TEXT,
+        tipo         TEXT NOT NULL,
+        valor        INTEGER NOT NULL,
+        activo       INTEGER NOT NULL DEFAULT 1,
+        created_at   TEXT NOT NULL DEFAULT '',
+        updated_at   TEXT NOT NULL DEFAULT '',
+        deleted_at   TEXT
+      );
     `,
   },
 ]

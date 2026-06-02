@@ -1,4 +1,5 @@
 import type { SyncStatus } from './sync'
+import type { CategoriaProducto } from './producto'
 
 export type MedioPago =
   | 'efectivo'
@@ -43,7 +44,11 @@ export interface VentaItem {
   producto_id: string
   descripcion: string           // copiado del producto al vender
   precio_unit_centavos: number  // copiado del producto al vender
+  /** Categoría congelada al vender — permite agrupar en el ticket aunque el producto cambie. */
+  categoria: CategoriaProducto
   /** REAL: permite fracciones para productos a granel. */
   cantidad: number
   subtotal_centavos: number     // floor(precio_unit * cantidad)
+  /** Descuento aplicado a este ítem, en centavos. 0 = sin descuento. */
+  descuento_centavos: number
 }

@@ -1,11 +1,13 @@
-import { useState } from 'react'
-import { CheckCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { CheckCircle, ShoppingCart } from 'lucide-react'
 import { useCartStore } from '../store/cartStore'
 import { useCajaStore } from '../store/cajaStore'
+import { getDataStore } from '../store/dataStore'
 import SearchInput from '../components/SearchInput'
 import ProductGrid from '../components/ProductGrid'
 import Cart from '../components/Cart'
 import PaymentModal from '../components/PaymentModal'
+import ScreenHeader from '../components/ScreenHeader'
 import { formatCentavos } from '../lib/money'
 import { syncService } from '../services/syncService'
 
@@ -16,6 +18,11 @@ export default function POSScreen() {
   const [showPayment, setShowPayment] = useState(false)
   const [lastSale, setLastSale] = useState<string | null>(null)
 
+  // Cargar el catálogo de descuentos para resolver en el carrito (offline-friendly).
+  useEffect(() => {
+    getDataStore().getDescuentosActivos().then(useCartStore.getState().setCatalogo)
+  }, [])
+
   function handleSuccess() {
     setShowPayment(false)
     setLastSale(new Date().toLocaleTimeString('es-AR'))
@@ -25,18 +32,19 @@ export default function POSScreen() {
   return (
     <div className="flex flex-col h-full bg-slate-950">
 
-      {/* ── Info bar ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-1.5 bg-slate-900
-                      border-b border-slate-800 shrink-0 text-xs">
-        <span className="text-slate-500">
-          Caja: <span className="text-slate-300">{cajaActiva?.id.slice(0, 8)}</span>
-        </span>
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <ScreenHeader
+        Icon={ShoppingCart}
+        title="Ventas POS"
+        subtitle={cajaActiva ? `Caja ${cajaActiva.id.slice(0, 8)}` : undefined}
+      >
         {lastSale && (
-          <span className="text-emerald-400 flex items-center gap-1">
-            <CheckCircle size={12} /> Venta registrada {lastSale}
+          <span className="flex items-center gap-1.5 text-emerald-300 text-xs font-medium
+                           bg-emerald-500/15 px-2.5 py-1 rounded-full">
+            <CheckCircle size={13} /> Venta registrada {lastSale}
           </span>
         )}
-      </div>
+      </ScreenHeader>
 
       {/* ── Body ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
@@ -48,9 +56,9 @@ export default function POSScreen() {
         </div>
 
         {/* Panel derecho: carrito + botones de pago */}
-        <div className="flex flex-col w-80 shrink-0 p-4">
-          <h2 className="text-slate-400 text-xs uppercase tracking-widest mb-3 font-medium">
-            Carrito — {items.length} ítem{items.length !== 1 ? 's' : ''}
+        <div className="flex flex-col w-96 shrink-0 p-4 bg-slate-900/40">
+          <h2 className="text-slate-300 text-sm mb-3 font-semibold">
+            Carrito <span className="text-slate-500 font-normal">· {items.length} ítem{items.length !== 1 ? 's' : ''}</span>
           </h2>
 
           <div className="flex-1 min-h-0">
@@ -72,7 +80,8 @@ export default function POSScreen() {
               onClick={() => setShowPayment(true)}
               disabled={items.length === 0}
               className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500
-                         disabled:opacity-30 disabled:cursor-not-allowed
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
+                         disabled:opacity-50 disabled:cursor-not-allowed
                          text-white font-bold text-lg cursor-pointer transition-colors"
             >
               Cobrar {items.length > 0 ? formatCentavos(total()) : ''}

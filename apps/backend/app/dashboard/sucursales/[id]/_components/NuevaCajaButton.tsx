@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AlertTriangle } from 'lucide-react'
 
 interface Props {
   sucursalId: string
@@ -49,8 +50,9 @@ export default function NuevaCajaButton({ sucursalId, variant = 'default' }: Pro
         {creada ? (
           <>
             <h3 className="text-white font-bold text-lg mb-2">Caja creada</h3>
-            <div className="bg-amber-950/40 border border-amber-700 rounded-xl p-4 mb-5 text-sm text-amber-300">
-              ⚠ Guardá estas credenciales — el secret no se vuelve a mostrar.
+            <div className="flex items-start gap-2 bg-amber-950/40 border border-amber-700 rounded-xl p-4 mb-5 text-sm text-amber-300">
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <span>Guardá estas credenciales — el secret no se vuelve a mostrar.</span>
             </div>
             <div className="space-y-4 mb-6">
               <div>
@@ -75,7 +77,7 @@ export default function NuevaCajaButton({ sucursalId, variant = 'default' }: Pro
                 type="text" value={nombre} onChange={e => setNombre(e.target.value)}
                 placeholder="Caja 1" autoFocus
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white
-                           placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             {error && <p className="text-red-400 text-sm mb-3">{error}</p>}

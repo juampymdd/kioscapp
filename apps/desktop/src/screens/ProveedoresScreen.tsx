@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, Save, Trash2 } from 'lucide-react'
+import { Plus, X, Save, Trash2, Truck } from 'lucide-react'
 import type { Proveedor } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
+import ScreenHeader from '../components/ScreenHeader'
 
 const LOCAL_ID = import.meta.env.VITE_LOCAL_ID ?? 'local-demo'
 
@@ -72,8 +73,11 @@ export default function ProveedoresScreen() {
     <div className="flex h-full bg-slate-950">
       {/* Lista */}
       <div className="flex flex-col flex-1 min-w-0 border-r border-slate-800">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 shrink-0">
-          <h1 className="text-white font-semibold">Proveedores</h1>
+        <ScreenHeader
+          Icon={Truck}
+          title="Proveedores"
+          subtitle={`${proveedores.length} proveedor${proveedores.length !== 1 ? 'es' : ''}`}
+        >
           <button
             onClick={nuevo}
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white
@@ -81,7 +85,7 @@ export default function ProveedoresScreen() {
           >
             <Plus size={16} /> Nuevo
           </button>
-        </div>
+        </ScreenHeader>
 
         <div className="flex-1 overflow-y-auto">
           {proveedores.length === 0 ? (

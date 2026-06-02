@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-const WIDTH: usize = 42;
+const WIDTH: usize = 32;
 
 #[derive(Deserialize)]
 #[allow(dead_code)]
@@ -8,8 +8,25 @@ pub struct ItemTicket {
     pub descripcion: String,
     pub cantidad: f64,
     pub precio_unit_centavos: i64,
+    #[serde(default = "categoria_default")]
+    pub categoria: String,
     pub subtotal_centavos: i64,
+    #[serde(default)]
+    pub descuento_centavos: i64,
 }
+
+fn categoria_default() -> String { "varios".to_string() }
+
+// Orden fijo de categorías + etiqueta legible. Espejo de CATEGORIA_ORDEN/LABEL en shared.
+const CATEGORIA_ORDEN: [(&str, &str); 7] = [
+    ("cigarrillos",     "Cigarrillos"),
+    ("bebidas",         "Bebidas"),
+    ("golosinas",       "Golosinas"),
+    ("kiosco",          "Kiosco"),
+    ("recarga_sube",    "SUBE"),
+    ("recarga_celular", "Celular"),
+    ("varios",          "Varios"),
+];
 
 #[derive(Deserialize)]
 pub struct DatosTicket {
@@ -80,19 +97,41 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
     b.extend_from_slice("=".repeat(WIDTH).as_bytes());
     b.push(0x0A);
 
-    // Items: "DESCRIPCION        x2    $1.500"
-    for item in &datos.items {
-        let desc = ascii(&item.descripcion);
-        let desc = if desc.len() > 22 { &desc[..22] } else { &desc };
-        let qty = if (item.cantidad - item.cantidad.floor()).abs() < 0.001 {
-            format!("x{}", item.cantidad as i64)
-        } else {
-            format!("x{:.2}", item.cantidad)
-        };
-        let left  = format!("{} {}", desc, qty);
-        let right = pesos(item.subtotal_centavos);
-        b.extend_from_slice(right_align(&left, &right).as_bytes());
+    // Agrupado por categoria (orden fijo): titulo en negrita, luego cada item en
+    // dos lineas (nombre / "cant x unit ... total") + linea de descuento si > 0.
+    for (cat_key, cat_label) in CATEGORIA_ORDEN.iter() {
+        let items: Vec<&ItemTicket> =
+            datos.items.iter().filter(|i| i.categoria == *cat_key).collect();
+        if items.is_empty() { continue; }
+
+        // Titulo categoria en negrita
+        b.extend_from_slice(&[0x1B, 0x45, 0x01]);
+        b.extend_from_slice(ascii(cat_label).as_bytes());
         b.push(0x0A);
+        b.extend_from_slice(&[0x1B, 0x45, 0x00]);
+
+        for item in items {
+            let desc = ascii(&item.descripcion);
+            let desc = if desc.len() > WIDTH { &desc[..WIDTH] } else { &desc };
+            b.extend_from_slice(desc.as_bytes());
+            b.push(0x0A);
+
+            let cant = if (item.cantidad - item.cantidad.floor()).abs() < 0.001 {
+                format!("{}", item.cantidad as i64)
+            } else {
+                format!("{:.2}", item.cantidad)
+            };
+            let qty_line = format!("{} x {}", cant, pesos(item.precio_unit_centavos));
+            b.extend_from_slice(right_align(&qty_line, &pesos(item.subtotal_centavos)).as_bytes());
+            b.push(0x0A);
+
+            if item.descuento_centavos > 0 {
+                b.extend_from_slice(
+                    right_align("", &format!("-{}", pesos(item.descuento_centavos))).as_bytes(),
+                );
+                b.push(0x0A);
+            }
+        }
     }
 
     b.extend_from_slice("-".repeat(WIDTH).as_bytes());
@@ -103,11 +142,11 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
         b.push(0x0A);
     }
 
-    // Bold total
-    b.extend_from_slice(&[0x1B, 0x45, 0x01]);
+    // Total: negrita + doble alto (GS ! 0x01 — alto doble, ancho normal para no romper las 32 cols)
+    b.extend_from_slice(&[0x1B, 0x45, 0x01, 0x1D, 0x21, 0x01]);
     b.extend_from_slice(right_align("TOTAL:", &pesos(datos.total_centavos)).as_bytes());
     b.push(0x0A);
-    b.extend_from_slice(&[0x1B, 0x45, 0x00]);
+    b.extend_from_slice(&[0x1D, 0x21, 0x00, 0x1B, 0x45, 0x00]);
 
     let medio_label = match datos.medio_pago.as_str() {
         "efectivo"        => "Efectivo",

@@ -55,8 +55,9 @@ export default function SearchInput({ onFiltroChange }: Props) {
             onChange={e => handleChange(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') buscarBarcode() }}
             placeholder="Escanear código o buscar por nombre…"
+            aria-label="Escanear código o buscar producto por nombre"
             className={`w-full bg-slate-800 border rounded-xl pl-10 pr-4 py-3 text-white
-                        placeholder-slate-500 focus:outline-none focus:ring-2
+                        placeholder-slate-400 focus:outline-none focus:ring-2
                         ${notFound
                           ? 'border-red-500 focus:ring-red-500'
                           : 'border-slate-600 focus:ring-blue-500'
@@ -66,8 +67,10 @@ export default function SearchInput({ onFiltroChange }: Props) {
         <button
           onClick={buscarBarcode}
           disabled={searching}
+          aria-label="Buscar producto"
           className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-xl
-                     font-medium transition-colors cursor-pointer disabled:opacity-50"
+                     font-medium transition-colors cursor-pointer disabled:opacity-50
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
         >
           {searching ? '…' : 'OK'}
         </button>

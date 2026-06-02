@@ -49,27 +49,27 @@ export default function NuevaSucursalPage() {
           <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} required autoFocus
             placeholder="Kiosco Centro"
             className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white
-                       placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                       placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
         </div>
         <div>
           <label className="block text-sm text-slate-400 mb-1.5">Dirección</label>
           <input type="text" value={direccion} onChange={e => setDireccion(e.target.value)}
             placeholder="Av. Corrientes 1234"
             className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white
-                       placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                       placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-slate-400 mb-1.5">Ciudad</label>
             <input type="text" value={ciudad} onChange={e => setCiudad(e.target.value)} placeholder="Buenos Aires"
               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white
-                         placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                         placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
           <div>
             <label className="block text-sm text-slate-400 mb-1.5">Provincia</label>
             <input type="text" value={provincia} onChange={e => setProvincia(e.target.value)} placeholder="CABA"
               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white
-                         placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                         placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
         </div>
 

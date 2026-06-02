@@ -37,7 +37,7 @@ export default function EditarCajaForm({ pv }: Props) {
           type="text" value={nombre} required
           onChange={e => { setNombre(e.target.value); setSuccess(false) }}
           className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white
-                     placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                     placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
       {error   && <p className="text-red-400 text-sm">{error}</p>}

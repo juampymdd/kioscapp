@@ -57,7 +57,7 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
           {suc.ciudad && <p className="text-slate-400 text-sm mt-1">{suc.ciudad}{suc.provincia ? `, ${suc.provincia}` : ''}</p>}
           {suc.direccion && <p className="text-slate-500 text-sm">{suc.direccion}</p>}
         </div>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium ${suc.activo ? 'bg-emerald-900/40 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+        <span className={`text-xs px-3 py-1 rounded-full font-medium ${suc.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
           {suc.activo ? 'Activa' : 'Inactiva'}
         </span>
       </div>
@@ -94,7 +94,7 @@ export default async function DetalleSucursalPage({ params }: { params: Promise<
                     <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">
                       {caja.nombre}
                     </h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${caja.activo ? 'bg-emerald-900/40 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${caja.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
                       {caja.activo ? 'Activa' : 'Inactiva'}
                     </span>
                   </div>

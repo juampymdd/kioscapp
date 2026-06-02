@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronRight, RefreshCw, Printer, Receipt } from 'lucide-react'
 import type { Venta, VentaItem } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos } from '../lib/money'
+import TicketModal from '../components/TicketModal'
+import ScreenHeader from '../components/ScreenHeader'
+import type { DatosTicket } from '../lib/ticket'
 
 const PAGE_SIZE = 20
 
@@ -65,6 +68,41 @@ export default function VentasScreen() {
   const [itemsMap,    setItemsMap]    = useState<Record<string, VentaItem[]>>({})
   const [loading,     setLoading]     = useState(false)
 
+  // Reimpresión
+  const [impresora,      setImpresora]      = useState<string | null>(null)
+  const [nombreComercio, setNombreComercio] = useState('KioscApp')
+  const [ticketDatos,    setTicketDatos]    = useState<DatosTicket | null>(null)
+
+  useEffect(() => {
+    getDataStore().getConfig('impresora').then(setImpresora)
+    getDataStore().getConfig('nombre_comercio').then(v => v && setNombreComercio(v))
+  }, [])
+
+  async function reimprimir(v: Venta) {
+    const its = itemsMap[v.id] ?? await getDataStore().getVentaItemsPorVenta(v.id)
+    if (!itemsMap[v.id]) setItemsMap(prev => ({ ...prev, [v.id]: its }))
+    setTicketDatos({
+      nombre_comercio: nombreComercio,
+      fecha: new Date(v.created_at).toLocaleString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }),
+      items: its.map(i => ({
+        descripcion:          i.descripcion,
+        cantidad:             i.cantidad,
+        precio_unit_centavos: i.precio_unit_centavos,
+        categoria:            i.categoria,
+        subtotal_centavos:    i.subtotal_centavos,
+        descuento_centavos:   i.descuento_centavos,
+      })),
+      total_centavos:          v.total_centavos,
+      descuento_centavos:      v.descuento_centavos,
+      medio_pago:              v.medio_pago,
+      monto_recibido_centavos: v.monto_recibido_centavos,
+      vuelto_centavos:         v.vuelto_centavos,
+    })
+  }
+
   async function cargar() {
     setLoading(true)
     try {
@@ -105,6 +143,19 @@ export default function VentasScreen() {
 
   return (
     <div className="flex flex-col h-full bg-slate-950 overflow-hidden">
+
+      <ScreenHeader
+        Icon={Receipt}
+        title="Mis ventas"
+        subtitle="Historial y reimpresión de tickets"
+      >
+        <button onClick={cargar} disabled={loading}
+          className="flex items-center gap-1.5 text-sm text-slate-300 bg-slate-800 hover:bg-slate-700
+                     px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+          title="Actualizar">
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Actualizar
+        </button>
+      </ScreenHeader>
 
       {/* Barra de filtros */}
       <div className="shrink-0 bg-slate-900 border-b border-slate-800 px-5 py-3 flex flex-wrap gap-3 items-end">
@@ -154,12 +205,6 @@ export default function VentasScreen() {
             ))}
           </div>
         </div>
-
-        <button onClick={cargar} disabled={loading}
-          className="ml-auto text-slate-500 hover:text-white transition-colors cursor-pointer"
-          title="Actualizar">
-          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-        </button>
       </div>
 
       {/* Resumen */}
@@ -259,11 +304,21 @@ export default function VentasScreen() {
                             </tbody>
                           </table>
                         )}
-                        {v.vuelto_centavos > 0 && (
-                          <p className="text-slate-500 text-xs mt-2">
-                            Recibido: {formatCentavos(v.monto_recibido_centavos)} · Vuelto: {formatCentavos(v.vuelto_centavos)}
-                          </p>
-                        )}
+                        <div className="flex items-center justify-between mt-2">
+                          {v.vuelto_centavos > 0 ? (
+                            <p className="text-slate-500 text-xs">
+                              Recibido: {formatCentavos(v.monto_recibido_centavos)} · Vuelto: {formatCentavos(v.vuelto_centavos)}
+                            </p>
+                          ) : <span />}
+                          <button
+                            onClick={() => reimprimir(v)}
+                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg
+                                       bg-blue-600 hover:bg-blue-500 text-white font-medium
+                                       cursor-pointer transition-colors"
+                          >
+                            <Printer size={13} /> Reimprimir
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -302,6 +357,14 @@ export default function VentasScreen() {
               className="px-2 py-1 text-xs bg-slate-800 text-slate-400 rounded disabled:opacity-30 hover:bg-slate-700 cursor-pointer transition-colors">»</button>
           </div>
         </div>
+      )}
+
+      {ticketDatos && (
+        <TicketModal
+          datos={ticketDatos}
+          impresora={impresora}
+          onDone={() => setTicketDatos(null)}
+        />
       )}
     </div>
   )

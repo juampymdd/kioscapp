@@ -52,7 +52,7 @@ export default function RegisterPage() {
                 required
                 autoFocus
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5
-                           text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                           text-white placeholder-slate-400 focus:outline-none focus:ring-2
                            focus:ring-blue-500 focus:border-transparent"
                 placeholder="Juan García"
               />
@@ -65,7 +65,7 @@ export default function RegisterPage() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5
-                           text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                           text-white placeholder-slate-400 focus:outline-none focus:ring-2
                            focus:ring-blue-500 focus:border-transparent"
                 placeholder="hola@kiosco.com"
               />
@@ -79,7 +79,7 @@ export default function RegisterPage() {
                 required
                 minLength={8}
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5
-                           text-white placeholder-slate-500 focus:outline-none focus:ring-2
+                           text-white placeholder-slate-400 focus:outline-none focus:ring-2
                            focus:ring-blue-500 focus:border-transparent"
                 placeholder="Mínimo 8 caracteres"
               />

@@ -4,6 +4,7 @@ import {
   LayoutGrid, type LucideIcon,
 } from 'lucide-react'
 import type { CategoriaProducto, Producto } from '@kioscapp/shared'
+import { CATEGORIA_LABEL } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { useCartStore } from '../store/cartStore'
 import { formatCentavos } from '../lib/money'
@@ -16,16 +17,6 @@ const CATEGORIA_ICONS: Record<CategoriaProducto, LucideIcon> = {
   recarga_sube:    Bus,
   recarga_celular: Smartphone,
   varios:          Package,
-}
-
-const CATEGORIA_LABEL: Record<CategoriaProducto, string> = {
-  cigarrillos:     'Cigarrillos',
-  bebidas:         'Bebidas',
-  golosinas:       'Golosinas',
-  kiosco:          'Kiosco',
-  recarga_sube:    'SUBE',
-  recarga_celular: 'Celular',
-  varios:          'Varios',
 }
 
 interface Props {
@@ -60,11 +51,13 @@ export default function ProductGrid({ filtro }: Props) {
       <div className="flex gap-1.5 flex-wrap shrink-0">
         <button
           onClick={() => setCategoria(null)}
+          aria-pressed={categoria === null}
           className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
                       transition-colors cursor-pointer
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
                       ${categoria === null
                         ? 'bg-blue-600 text-white'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                       }`}
         >
           <LayoutGrid size={11} />
@@ -77,11 +70,13 @@ export default function ProductGrid({ filtro }: Props) {
             <button
               key={cat}
               onClick={() => setCategoria(active ? null : cat)}
+              aria-pressed={active}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
                           transition-colors cursor-pointer
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
                           ${active
                             ? 'bg-blue-600 text-white'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                           }`}
             >
               <Icon size={11} />
@@ -92,29 +87,34 @@ export default function ProductGrid({ filtro }: Props) {
       </div>
 
       {/* Grid de productos */}
-      <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1 pr-1 content-start auto-rows-min">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2 overflow-y-auto flex-1 pr-1 content-start auto-rows-min">
         {filtrados.map(p => {
           const Icon = CATEGORIA_ICONS[p.categoria] ?? Package
           return (
             <button
               key={p.id}
               onClick={() => addItem(p)}
-              className="bg-slate-800 hover:bg-slate-700 border border-slate-700
-                         hover:border-blue-500 rounded-xl p-3 text-left
-                         transition-all cursor-pointer"
+              aria-label={`Agregar ${p.descripcion}, ${formatCentavos(p.precio_centavos)}`}
+              className="group flex flex-col bg-slate-800 hover:bg-slate-700 border border-slate-700
+                         hover:border-blue-500 rounded-xl p-3 text-left min-h-[7.5rem]
+                         transition-colors cursor-pointer
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
             >
-              <Icon size={22} className="text-slate-400 mb-1" />
-              <div className="text-white text-sm font-medium leading-tight line-clamp-2">
+              <div className="w-9 h-9 grid place-items-center rounded-lg bg-slate-700/60
+                              group-hover:bg-blue-600/20 transition-colors mb-2 shrink-0">
+                <Icon size={18} className="text-slate-300 group-hover:text-blue-300 transition-colors" />
+              </div>
+              <div className="text-white text-sm font-medium leading-snug line-clamp-2">
                 {p.descripcion}
               </div>
-              <div className="text-blue-400 font-bold mt-1 text-sm">
+              <div className="text-blue-400 font-bold mt-auto pt-1.5 text-base tabular-nums">
                 {formatCentavos(p.precio_centavos)}
               </div>
             </button>
           )
         })}
         {filtrados.length === 0 && (
-          <div className="col-span-2 flex items-center justify-center py-12 text-slate-500 text-sm">
+          <div className="col-span-full flex items-center justify-center py-12 text-slate-400 text-sm">
             {q || categoria ? 'Sin resultados' : 'Sin productos'}
           </div>
         )}

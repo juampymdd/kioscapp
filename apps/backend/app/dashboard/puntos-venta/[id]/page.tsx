@@ -78,7 +78,7 @@ export default async function DetalleCajaPage({ params }: { params: Promise<{ id
           <h1 className="text-2xl font-bold text-white">{pv.nombre}</h1>
           <p className="text-slate-400 text-sm mt-1">{suc.nombre}{suc.ciudad ? ` · ${suc.ciudad}` : ''}</p>
         </div>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium ${pv.activo ? 'bg-emerald-900/40 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+        <span className={`text-xs px-3 py-1 rounded-full font-medium ${pv.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
           {pv.activo ? 'Activo' : 'Inactivo'}
         </span>
       </div>

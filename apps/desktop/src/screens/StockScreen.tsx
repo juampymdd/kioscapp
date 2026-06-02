@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, CheckCircle, Plus } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Plus, Boxes } from 'lucide-react'
 import type { Producto, Stock } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
+import ScreenHeader from '../components/ScreenHeader'
 
 interface Row {
   producto: Producto
@@ -52,20 +53,31 @@ export default function StockScreen() {
     return !q || r.producto.descripcion.toLowerCase().includes(q)
   })
 
+  const bajoCount = rows.filter(r => {
+    const cant = parseFloat(r.editCantidad.replace(',', '.')) || 0
+    const alerta = parseFloat(r.editAlerta.replace(',', '.')) || 0
+    return cant <= alerta
+  }).length
+
   return (
     <div className="flex flex-col h-full bg-slate-950">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 shrink-0">
-        <h1 className="text-white font-semibold">Stock</h1>
+      <ScreenHeader
+        Icon={Boxes}
+        title="Stock"
+        subtitle={bajoCount > 0
+          ? `${bajoCount} producto${bajoCount !== 1 ? 's' : ''} con stock bajo`
+          : `${rows.length} producto${rows.length !== 1 ? 's' : ''} en control`}
+      >
         <input
           type="text"
           value={busqueda}
           onChange={e => setBusqueda(e.target.value)}
           placeholder="Buscar producto…"
-          className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-                     text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-1
+          className="w-64 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
+                     text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2
                      focus:ring-blue-500"
         />
-      </div>
+      </ScreenHeader>
 
       <div className="flex-1 overflow-y-auto">
         <table className="w-full text-sm">
@@ -100,8 +112,8 @@ export default function StockScreen() {
                           const v = Math.max(0, cant - 1)
                           updateRow(row.producto.id, { editCantidad: String(v) })
                         }}
-                        className="w-6 h-6 rounded bg-slate-700 hover:bg-slate-600 text-white
-                                   text-xs font-bold cursor-pointer flex items-center justify-center"
+                        className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white
+                                   font-bold cursor-pointer flex items-center justify-center transition-colors"
                       >
                         <Plus size={12} className="rotate-45" />
                       </button>
@@ -119,8 +131,8 @@ export default function StockScreen() {
                           const v = cant + 1
                           updateRow(row.producto.id, { editCantidad: String(v) })
                         }}
-                        className="w-6 h-6 rounded bg-slate-700 hover:bg-slate-600 text-white
-                                   text-xs font-bold cursor-pointer flex items-center justify-center"
+                        className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white
+                                   font-bold cursor-pointer flex items-center justify-center transition-colors"
                       >
                         <Plus size={12} />
                       </button>
@@ -141,8 +153,8 @@ export default function StockScreen() {
 
                   <td className="px-4 py-2.5 text-center">
                     {bajo
-                      ? <span className="inline-flex items-center gap-1 text-amber-400 text-xs"><AlertTriangle size={12} />Bajo</span>
-                      : <span className="inline-flex items-center gap-1 text-emerald-400 text-xs"><CheckCircle size={12} />OK</span>
+                      ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300"><AlertTriangle size={12} />Bajo</span>
+                      : <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300"><CheckCircle size={12} />OK</span>
                     }
                   </td>
 

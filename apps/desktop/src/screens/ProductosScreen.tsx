@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, Save } from 'lucide-react'
+import { Plus, X, Save, Package } from 'lucide-react'
 import type { CategoriaProducto, Producto } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos, parseCentavos, centavosToInputStr } from '../lib/money'
+import ScreenHeader from '../components/ScreenHeader'
 
 const CATEGORIAS: CategoriaProducto[] = [
   'bebidas', 'golosinas', 'cigarrillos', 'kiosco',
@@ -98,17 +99,21 @@ export default function ProductosScreen() {
       {/* Lista */}
       <div className="flex flex-col flex-1 min-w-0 border-r border-slate-800">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 shrink-0">
+        <ScreenHeader
+          Icon={Package}
+          title="Productos"
+          subtitle={`${filtrados.length} producto${filtrados.length !== 1 ? 's' : ''}`}
+        >
           <input
             type="text"
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
             placeholder="Buscar por nombre o código…"
-            className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-                       text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-1
+            className="w-60 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
+                       text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2
                        focus:ring-blue-500"
           />
-          <label className="flex items-center gap-2 text-slate-400 text-sm cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-slate-300 text-sm cursor-pointer select-none">
             <input
               type="checkbox"
               checked={mostrarInactivos}
@@ -124,7 +129,7 @@ export default function ProductosScreen() {
           >
             <Plus size={16} /> Nuevo
           </button>
-        </div>
+        </ScreenHeader>
 
         {/* Tabla */}
         <div className="flex-1 overflow-y-auto">
@@ -156,7 +161,7 @@ export default function ProductosScreen() {
                     {p.codigo_barras ?? '—'}
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.activo ? 'bg-emerald-900/40 text-emerald-400' : 'bg-slate-700 text-slate-500'}`}>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${p.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-700/60 text-slate-400'}`}>
                       {p.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>

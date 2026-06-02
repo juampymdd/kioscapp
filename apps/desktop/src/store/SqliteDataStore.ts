@@ -1,6 +1,6 @@
 import Database from '@tauri-apps/plugin-sql'
 import type {
-  Producto, Venta, VentaItem, Caja, MovimientoCaja, Stock, Proveedor,
+  Producto, Venta, VentaItem, Caja, MovimientoCaja, Stock, Proveedor, Descuento,
 } from '@kioscapp/shared'
 import type { DataStore } from './dataStore'
 import { migrations } from '../lib/migrations'
@@ -125,8 +125,27 @@ function mapVentaItem(r: Row): VentaItem {
     producto_id: r.producto_id as string,
     descripcion: r.descripcion as string,
     precio_unit_centavos: r.precio_unit_centavos as number,
+    categoria: (r.categoria as VentaItem['categoria']) ?? 'varios',
     cantidad: r.cantidad as number,
     subtotal_centavos: r.subtotal_centavos as number,
+    descuento_centavos: (r.descuento_centavos as number) ?? 0,
+  }
+}
+
+function mapDescuento(r: Row): Descuento {
+  return {
+    id: r.id as string,
+    user_id: (r.user_id as string) ?? '',
+    sucursal_id: (r.sucursal_id as string | null) ?? null,
+    objetivo: r.objetivo as Descuento['objetivo'],
+    producto_id: (r.producto_id as string | null) ?? null,
+    categoria: (r.categoria as Descuento['categoria']) ?? null,
+    tipo: r.tipo as Descuento['tipo'],
+    valor: r.valor as number,
+    activo: (r.activo as number) === 1,
+    created_at: (r.created_at as string) ?? '',
+    updated_at: (r.updated_at as string) ?? '',
+    deleted_at: (r.deleted_at as string | null) ?? null,
   }
 }
 
@@ -139,9 +158,17 @@ export class SqliteDataStore implements DataStore {
 
   async init(): Promise<void> {
     this.db = await Database.load('sqlite:kioscapp.db')
-    // Aplicar migraciones acumuladas
+    // Aplicar migraciones acumuladas. El loop corre todas en cada arranque, así
+    // que el SQL debe ser idempotente. CREATE usa IF NOT EXISTS; los ALTER ADD
+    // COLUMN no lo soportan en SQLite, por eso ignoramos el error de columna ya
+    // existente (la migración ya se aplicó en un arranque previo).
     for (const m of migrations) {
-      await this.db.execute(m.sql)
+      try {
+        await this.db.execute(m.sql)
+      } catch (e) {
+        if (/duplicate column name/i.test(String(e))) continue
+        throw e
+      }
     }
   }
 
@@ -226,12 +253,14 @@ export class SqliteDataStore implements DataStore {
       await this.db.execute(
         `INSERT INTO venta_items
            (id, created_at, local_id, sync_status, venta_id, producto_id,
-            descripcion, precio_unit_centavos, cantidad, subtotal_centavos)
-         VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9)`,
+            descripcion, precio_unit_centavos, categoria, cantidad,
+            subtotal_centavos, descuento_centavos)
+         VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11)`,
         [
           item.id, item.created_at, item.local_id, item.venta_id,
           item.producto_id, item.descripcion, item.precio_unit_centavos,
-          item.cantidad, item.subtotal_centavos,
+          item.categoria, item.cantidad, item.subtotal_centavos,
+          item.descuento_centavos,
         ],
       )
     }
@@ -454,6 +483,33 @@ export class SqliteDataStore implements DataStore {
        ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
       [key, value],
     )
+  }
+
+  // ── Descuentos ───────────────────────────────────────────────────────────
+
+  async upsertDescuento(d: Descuento): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO descuentos
+         (id, user_id, sucursal_id, objetivo, producto_id, categoria, tipo, valor,
+          activo, created_at, updated_at, deleted_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       ON CONFLICT(id) DO UPDATE SET
+         sucursal_id=excluded.sucursal_id, objetivo=excluded.objetivo,
+         producto_id=excluded.producto_id, categoria=excluded.categoria,
+         tipo=excluded.tipo, valor=excluded.valor, activo=excluded.activo,
+         updated_at=excluded.updated_at, deleted_at=excluded.deleted_at`,
+      [
+        d.id, d.user_id, d.sucursal_id, d.objetivo, d.producto_id, d.categoria,
+        d.tipo, d.valor, d.activo ? 1 : 0, d.created_at, d.updated_at, d.deleted_at,
+      ],
+    )
+  }
+
+  async getDescuentosActivos(): Promise<Descuento[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM descuentos WHERE activo = 1 AND deleted_at IS NULL`,
+    )
+    return rows.map(mapDescuento)
   }
 
   // ── Sync ───────────────────────────────────────────────────────────────────

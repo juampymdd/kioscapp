@@ -33,3 +33,26 @@ body,
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-pos-border); border-radius: 3px; }
+
+/* Placeholders al nivel de muted (contraste AA) */
+::placeholder { color: var(--color-pos-muted); opacity: 1; }
+
+/* Foco de teclado visible y consistente (a11y híbrido teclado).
+   :where() = especificidad 0, no pisa los focus:ring existentes. */
+:where(button, a, select, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--color-pos-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Reduced motion: jornadas largas, sin animaciones que cansen */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

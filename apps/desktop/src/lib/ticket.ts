@@ -1,8 +1,13 @@
+import type { CategoriaProducto } from '@kioscapp/shared'
+import { CATEGORIA_LABEL, CATEGORIA_ORDEN } from '@kioscapp/shared'
+
 export interface ItemTicket {
   descripcion: string
   cantidad: number
   precio_unit_centavos: number
+  categoria: CategoriaProducto
   subtotal_centavos: number
+  descuento_centavos: number
 }
 
 export interface DatosTicket {
@@ -16,7 +21,7 @@ export interface DatosTicket {
   vuelto_centavos: number
 }
 
-const W = 42
+const W = 32
 
 function pesos(centavos: number): string {
   const abs = Math.abs(centavos)
@@ -37,7 +42,7 @@ function center(s: string): string {
 }
 
 export type LineaTicket =
-  | { tipo: 'texto';   texto: string; negrita?: boolean; centrado?: boolean }
+  | { tipo: 'texto';   texto: string; negrita?: boolean; centrado?: boolean; grande?: boolean }
   | { tipo: 'sep';     char: '=' | '-' }
 
 export function buildLineas(d: DatosTicket): LineaTicket[] {
@@ -47,10 +52,23 @@ export function buildLineas(d: DatosTicket): LineaTicket[] {
   lines.push({ tipo: 'texto', texto: center(d.fecha), centrado: true })
   lines.push({ tipo: 'sep', char: '=' })
 
-  for (const item of d.items) {
-    const desc = item.descripcion.length > 22 ? item.descripcion.slice(0, 22) : item.descripcion
-    const qty  = Number.isInteger(item.cantidad) ? `x${item.cantidad}` : `x${item.cantidad.toFixed(2)}`
-    lines.push({ tipo: 'texto', texto: rightAlign(`${desc} ${qty}`, pesos(item.subtotal_centavos)) })
+  // Agrupado por categoría (orden fijo). Por ítem: nombre / "cant x unit ... total"
+  // / "-descuento" (solo si hay descuento).
+  for (const cat of CATEGORIA_ORDEN) {
+    const items = d.items.filter(i => i.categoria === cat)
+    if (items.length === 0) continue
+
+    lines.push({ tipo: 'texto', texto: CATEGORIA_LABEL[cat], negrita: true })
+
+    for (const item of items) {
+      const cant = Number.isInteger(item.cantidad) ? `${item.cantidad}` : item.cantidad.toFixed(2)
+      const desc = item.descripcion.length > W ? item.descripcion.slice(0, W) : item.descripcion
+      lines.push({ tipo: 'texto', texto: desc })
+      lines.push({ tipo: 'texto', texto: rightAlign(`${cant} x ${pesos(item.precio_unit_centavos)}`, pesos(item.subtotal_centavos)) })
+      if (item.descuento_centavos > 0) {
+        lines.push({ tipo: 'texto', texto: rightAlign('', `-${pesos(item.descuento_centavos)}`) })
+      }
+    }
   }
 
   lines.push({ tipo: 'sep', char: '-' })
@@ -59,7 +77,7 @@ export function buildLineas(d: DatosTicket): LineaTicket[] {
     lines.push({ tipo: 'texto', texto: rightAlign('DESCUENTO:', pesos(d.descuento_centavos)) })
   }
 
-  lines.push({ tipo: 'texto', texto: rightAlign('TOTAL:', pesos(d.total_centavos)), negrita: true })
+  lines.push({ tipo: 'texto', texto: rightAlign('TOTAL:', pesos(d.total_centavos)), negrita: true, grande: true })
 
   const medioLabel: Record<string, string> = {
     efectivo:        'Efectivo',

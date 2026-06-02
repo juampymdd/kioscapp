@@ -46,7 +46,7 @@ export default function TicketModal({ datos, impresora, onDone }: Props) {
         </div>
 
         {/* Ticket preview */}
-        <div className="flex-1 overflow-y-auto p-6 flex justify-center">
+        <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start">
           <div
             className="bg-white text-black font-mono text-[11px] leading-5 px-4 py-5
                        shadow-xl w-64 shrink-0 select-none"
@@ -54,6 +54,17 @@ export default function TicketModal({ datos, impresora, onDone }: Props) {
             {lineas.map((l, i) => {
               if (l.tipo === 'sep') {
                 return <div key={i} className="whitespace-pre text-gray-400">{l.char.repeat(32)}</div>
+              }
+              if (l.grande) {
+                // Fuente grande: el padding monospace de 32 cols no entra en w-64.
+                // Separar label/monto y alinear con flex.
+                const [left, right] = l.texto.trim().split(/\s{2,}/)
+                return (
+                  <div key={i} className="flex justify-between font-bold text-[17px] leading-7 my-0.5">
+                    <span>{left}</span>
+                    <span>{right}</span>
+                  </div>
+                )
               }
               return (
                 <div

@@ -76,8 +76,10 @@ export const venta_items = pgTable('venta_items', {
   producto_id:          text('producto_id').notNull(),
   descripcion:          text('descripcion').notNull(),
   precio_unit_centavos: integer('precio_unit_centavos').notNull(),
+  categoria:            text('categoria').notNull().default('varios'),
   cantidad:             real('cantidad').notNull(),
   subtotal_centavos:    integer('subtotal_centavos').notNull(),
+  descuento_centavos:   integer('descuento_centavos').notNull().default(0),
 }, t => [
   index('idx_venta_items_venta').on(t.venta_id),
 ])
@@ -135,3 +137,20 @@ export const puntos_venta = pgTable('puntos_venta', {
   activo:      boolean('activo').notNull().default(true),
   created_at:  text('created_at').notNull(),
 }, t => [index('idx_pv_sucursal').on(t.sucursal_id)])
+
+// Descuentos de catálogo. sucursal_id NULL = global (todas las sucursales del dueño).
+// valor: tipo='monto' → centavos; tipo='porcentaje' → entero 1..100.
+export const descuentos = pgTable('descuentos', {
+  ...syncFields,
+  user_id:     text('user_id').notNull().references(() => users.id),
+  sucursal_id: text('sucursal_id').references(() => sucursales.id),
+  objetivo:    text('objetivo', { enum: ['producto', 'categoria'] }).notNull(),
+  producto_id: text('producto_id'),
+  categoria:   text('categoria'),
+  tipo:        text('tipo', { enum: ['monto', 'porcentaje'] }).notNull(),
+  valor:       integer('valor').notNull(),
+  activo:      boolean('activo').notNull().default(true),
+}, t => [
+  index('idx_descuentos_user').on(t.user_id),
+  index('idx_descuentos_sucursal').on(t.sucursal_id),
+])

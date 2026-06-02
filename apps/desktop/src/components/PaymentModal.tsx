@@ -23,7 +23,7 @@ const MEDIOS: { id: MedioPago; label: string; Icon: LucideIcon }[] = [
 ]
 
 export default function PaymentModal({ onClose, onSuccess }: Props) {
-  const { items, total, descuento_centavos, clear } = useCartStore()
+  const { items, total, descuento_centavos, clear, setDescuento } = useCartStore()
   const { cajaActiva } = useCajaStore()
   const [medio, setMedio]           = useState<MedioPago>('efectivo')
   const [recibido, setRecibido]     = useState(0)
@@ -76,8 +76,10 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         producto_id: item.producto.id,
         descripcion: item.producto.descripcion,
         precio_unit_centavos: item.producto.precio_centavos,
+        categoria: item.producto.categoria,
         cantidad: item.cantidad,
         subtotal_centavos: item.subtotal_centavos,
+        descuento_centavos: item.descuento_centavos,
       }))
 
       // Capture ticket data BEFORE clearing the cart
@@ -91,7 +93,9 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
           descripcion:          i.producto.descripcion,
           cantidad:             i.cantidad,
           precio_unit_centavos: i.producto.precio_centavos,
+          categoria:            i.producto.categoria,
           subtotal_centavos:    i.subtotal_centavos,
+          descuento_centavos:   i.descuento_centavos,
         })),
         total_centavos:             totalCentavos,
         descuento_centavos,
@@ -157,6 +161,17 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
           <p className="text-blue-400 text-4xl font-bold mt-1">
             {formatCentavos(totalCentavos)}
           </p>
+        </div>
+
+        {/* Descuento global de la venta */}
+        <div className="mb-5">
+          <label className="text-slate-300 text-sm font-medium block mb-1">Descuento (toda la venta)</label>
+          <MoneyInput
+            centavos={descuento_centavos}
+            onChange={setDescuento}
+            className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white text-right
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         {/* Medio de pago */}

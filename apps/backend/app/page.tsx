@@ -1,4 +1,23 @@
 import Link from 'next/link'
+import { Zap, RefreshCw, BarChart3, type LucideIcon } from 'lucide-react'
+
+const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
+  {
+    Icon: Zap,
+    title: 'Ventas offline',
+    desc: 'Cobrás aunque no haya internet. La app funciona 100% local con SQLite embebido.',
+  },
+  {
+    Icon: RefreshCw,
+    title: 'Sync automático',
+    desc: 'Cuando vuelve la conexión, todas tus ventas y movimientos se sincronizan solos.',
+  },
+  {
+    Icon: BarChart3,
+    title: 'Dashboard por sucursal',
+    desc: 'Mirá cuánto vendiste hoy, esta semana y este mes. Desglose por medio de pago.',
+  },
+]
 
 export default function LandingPage() {
   return (
@@ -53,27 +72,13 @@ export default function LandingPage() {
       <section className="max-w-5xl mx-auto px-6 py-16">
         <h2 className="text-3xl font-bold text-center mb-12 text-white">Todo lo que necesitás</h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: '⚡',
-              title: 'Ventas offline',
-              desc: 'Cobrás aunque no haya internet. La app funciona 100% local con SQLite embebido.',
-            },
-            {
-              icon: '🔄',
-              title: 'Sync automático',
-              desc: 'Cuando vuelve la conexión, todas tus ventas y movimientos se sincronizan solos.',
-            },
-            {
-              icon: '📊',
-              title: 'Dashboard por sucursal',
-              desc: 'Mirá cuánto vendiste hoy, esta semana y este mes. Desglose por medio de pago.',
-            },
-          ].map(f => (
-            <div key={f.title} className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="text-lg font-bold text-white mb-2">{f.title}</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
+          {FEATURES.map(({ Icon, title, desc }) => (
+            <div key={title} className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div className="w-11 h-11 grid place-items-center rounded-xl bg-blue-600/15 text-blue-400 mb-4">
+                <Icon size={22} />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>

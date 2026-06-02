@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-02T00:00:00.000Z",
+  "title": "Design System: KioscApp",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Azul Acción", "canonical": "#2563eb", "tonalRamp": ["#172554", "#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#bfdbfe"] },
+      "primary-bright": { "role": "primary", "displayName": "Azul Brillante", "canonical": "#3b82f6", "tonalRamp": ["#172554", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"] },
+      "accent-price": { "role": "primary", "displayName": "Azul Precio", "canonical": "#60a5fa", "tonalRamp": ["#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#eff6ff"] },
+      "bg": { "role": "neutral", "displayName": "Negro Mostrador", "canonical": "#020617", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1"] },
+      "surface": { "role": "neutral", "displayName": "Superficie", "canonical": "#0f172a", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1"] },
+      "card": { "role": "neutral", "displayName": "Tarjeta", "canonical": "#1e293b", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1"] },
+      "ink": { "role": "neutral", "displayName": "Tinta", "canonical": "#f8fafc", "tonalRamp": ["#0f172a", "#334155", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f1f5f9", "#f8fafc"] },
+      "muted": { "role": "neutral", "displayName": "Apagado", "canonical": "#94a3b8", "tonalRamp": ["#0f172a", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f8fafc"] },
+      "success": { "role": "tertiary", "displayName": "Verde Confirmado", "canonical": "#22c55e", "tonalRamp": ["#052e16", "#14532d", "#166534", "#15803d", "#16a34a", "#22c55e", "#4ade80", "#bbf7d0"] },
+      "danger": { "role": "tertiary", "displayName": "Rojo Peligro", "canonical": "#ef4444", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fecaca"] },
+      "warning": { "role": "tertiary", "displayName": "Ámbar Alerta", "canonical": "#f59e0b", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "Títulos de pantalla/modal, totales destacados." },
+      "body": { "displayName": "Body", "purpose": "Contenido general, nombres de producto, filas." },
+      "label": { "displayName": "Label", "purpose": "Chips, badges, etiquetas de campo, errores." },
+      "mono": { "displayName": "Mono", "purpose": "IDs de caja y códigos de barras únicamente." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "transition-colors", "value": "color/background-color/border-color 150ms ease", "purpose": "Cambios de estado de botones, chips, nav, hover de tarjeta." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Botón Primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal: cobrar, confirmar, OK del buscador.",
+      "html": "<button class=\"ds-btn-primary\">Cobrar</button>",
+      "css": ".ds-btn-primary { background: #2563eb; color: #f8fafc; padding: 12px 16px; border: none; border-radius: 12px; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-primary:hover { background: #3b82f6; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #3b82f6; } .ds-btn-primary:disabled { opacity: 0.5; cursor: default; }"
+    },
+    {
+      "name": "Chip de Categoría",
+      "kind": "chip",
+      "refersTo": "chip-active",
+      "description": "Filtro de categoría tipo píldora; activo vs inactivo.",
+      "html": "<button class=\"ds-chip ds-chip--active\">Bebidas</button><button class=\"ds-chip\">Golosinas</button>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 4px; background: #1e293b; color: #94a3b8; padding: 4px 10px; border: none; border-radius: 9999px; font-family: system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background-color 150ms ease, color 150ms ease; } .ds-chip:hover { background: #334155; color: #f8fafc; } .ds-chip--active { background: #2563eb; color: #f8fafc; }"
+    },
+    {
+      "name": "Tarjeta de Producto",
+      "kind": "card",
+      "refersTo": "card-product",
+      "description": "Botón-tarjeta del grid de productos: ícono, nombre, precio.",
+      "html": "<button class=\"ds-card\"><svg class=\"ds-card__icon\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 8h14M5 8a2 2 0 1 1 0-4h14a2 2 0 1 1 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8\"/></svg><span class=\"ds-card__name\">Coca-Cola 500ml</span><span class=\"ds-card__price\">$1.200,00</span></button>",
+      "css": ".ds-card { display: flex; flex-direction: column; align-items: flex-start; text-align: left; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 12px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease; } .ds-card:hover { background: #334155; border-color: #3b82f6; } .ds-card__icon { color: #94a3b8; margin-bottom: 4px; } .ds-card__name { color: #f8fafc; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.2; } .ds-card__price { color: #60a5fa; font-family: system-ui, sans-serif; font-size: 0.875rem; font-weight: 700; margin-top: 4px; }"
+    },
+    {
+      "name": "Input de Búsqueda",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Buscar producto / escanear código de barras.",
+      "html": "<div class=\"ds-field\"><svg class=\"ds-field__icon\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10\"/></svg><input class=\"ds-input\" placeholder=\"Escanear código o buscar por nombre…\" /></div>",
+      "css": ".ds-field { position: relative; display: flex; align-items: center; } .ds-field__icon { position: absolute; left: 12px; color: #94a3b8; pointer-events: none; } .ds-input { width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 12px; padding: 12px 16px 12px 40px; font-family: system-ui, sans-serif; font-size: 0.875rem; } .ds-input::placeholder { color: #94a3b8; } .ds-input:focus { outline: none; box-shadow: 0 0 0 2px #3b82f6; border-color: #3b82f6; }"
+    },
+    {
+      "name": "Ítem de Navegación",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Rail lateral de íconos; activo vs en reposo.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav__item ds-nav__item--active\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/></svg></button><button class=\"ds-nav__item\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\"/></svg></button></nav>",
+      "css": ".ds-nav { display: inline-flex; flex-direction: column; gap: 4px; background: #0f172a; padding: 8px 4px; border-right: 1px solid #1e293b; } .ds-nav__item { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; border-radius: 8px; background: transparent; color: #94a3b8; cursor: pointer; transition: background-color 150ms ease, color 150ms ease; } .ds-nav__item:hover { background: #1e293b; color: #f8fafc; } .ds-nav__item--active { background: #2563eb; color: #f8fafc; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Mostrador",
+    "overview": "KioscApp es la superficie de trabajo de una caja registradora, no una página de producto. La interfaz es un panel oscuro y quieto sobre el que la información de la venta aparece con contraste alto e inmediato: como un mostrador bien organizado de noche, donde cada cosa está donde el cajero la busca a ciegas. La estética sirve a la velocidad y a la confianza; nunca compite con la tarea. El sistema es denso pero honesto: muestra lo que el mostrador necesita sin saturar, jerarquizando por tamaño y peso de texto, no por color recargado. El color es funcional: azul para lo accionable, verde para lo confirmado, rojo para lo destructivo o el error, ámbar para la advertencia. Todo lo demás es la rampa de grises fríos que construye profundidad por capas tonales, sin sombras.",
+    "keyCharacteristics": [
+      "Tema oscuro permanente, fondo casi negro (#020617), profundidad por capas de slate.",
+      "Plano: sin sombras; la elevación se lee por color de superficie, no por blur.",
+      "Acento azul único para lo accionable; semánticos (verde/rojo/ámbar) reservados a estado.",
+      "Denso y táctil a la vez: targets cómodos (≥40px) con tipografía chica y precisa.",
+      "Color nunca es el único portador de significado (daltonismo)."
+    ],
+    "rules": [
+      { "name": "La Regla del Acento Único", "body": "El azul es el único color de marca. Si algo es azul, es accionable. No se usa azul decorativo. Los semánticos jamás se usan por estética: solo comunican estado.", "section": "colors" },
+      { "name": "La Regla del Doble Canal", "body": "Ningún estado se comunica solo con color. Rojo/verde/ámbar siempre van acompañados de ícono, texto o forma.", "section": "colors" },
+      { "name": "La Regla Sin Mayúsculas Sostenidas", "body": "Nada de texto en ALL CAPS en cuerpo ni botones. Las etiquetas van en sentence case.", "section": "typography" },
+      { "name": "La Regla Plana", "body": "Las superficies son planas en reposo. El estado se comunica cambiando color de superficie o anillo de foco, nunca agregando sombra.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do mantener tema oscuro con fondo #020617 y profundidad por capas de slate.",
+      "Do usar el azul solo para lo accionable; reservar verde/rojo/ámbar para estado.",
+      "Do acompañar todo estado de color con ícono o texto (daltonismo).",
+      "Do garantizar contraste WCAG AA: texto cuerpo sobre tarjeta/superficie ≥4.5:1.",
+      "Do usar targets ≥40px y radios 8–12px; pill solo para chips/tags.",
+      "Do respetar prefers-reduced-motion; transiciones de color cortas, sin coreografía."
+    ],
+    "donts": [
+      "Don't caer en el look de SaaS genérico: landing colorida, gradientes de marketing, ilustraciones, cards redondeadas decorativas.",
+      "Don't parecer un POS viejo de Windows: gris sucio, botones 3D/biselados, sombras duras.",
+      "Don't agregar box-shadow decorativo; el sistema es plano (capas tonales).",
+      "Don't usar border-radius ≥ 16px en tarjetas/inputs (tope 12px); el full-pill es solo para chips.",
+      "Don't usar texto gris claro que baje del contraste AA.",
+      "Don't depender solo del color rojo/verde para comunicar stock, errores o estados.",
+      "Don't usar mayúsculas sostenidas en botones ni cuerpo."
+    ]
+  }
+}

@@ -12,6 +12,7 @@ import type { Venta, VentaItem } from '@kioscapp/shared'
 import type { Caja, MovimientoCaja } from '@kioscapp/shared'
 import type { Stock } from '@kioscapp/shared'
 import type { Proveedor } from '@kioscapp/shared'
+import type { Descuento } from '@kioscapp/shared'
 
 export interface DataStore {
   // ── Productos ─────────────────────────────────────────────────────────────
@@ -50,6 +51,10 @@ export interface DataStore {
   // ── Config local ─────────────────────────────────────────────────────────
   getConfig(key: string): Promise<string | null>
   setConfig(key: string, value: string): Promise<void>
+
+  // ── Descuentos (catálogo bajado del central) ───────────────────────────────
+  upsertDescuento(d: Descuento): Promise<void>
+  getDescuentosActivos(): Promise<Descuento[]>
 
   // ── Sincronización ────────────────────────────────────────────────────────
   getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>>
