@@ -1,11 +1,13 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, Tags, Truck, Tag } from 'lucide-react'
+import { LayoutDashboard, Receipt, Wallet, Package, Tags, Truck, Tag } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 const ITEMS: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: '/dashboard',             label: 'Resumen',     Icon: LayoutDashboard },
+  { href: '/dashboard/ventas',      label: 'Ventas',      Icon: Receipt },
+  { href: '/dashboard/cajas',       label: 'Cajas',       Icon: Wallet },
   { href: '/dashboard/productos',   label: 'Productos',   Icon: Package },
   { href: '/dashboard/categorias',  label: 'Categorías',  Icon: Tags },
   { href: '/dashboard/proveedores', label: 'Proveedores', Icon: Truck },
