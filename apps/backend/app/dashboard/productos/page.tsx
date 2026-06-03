@@ -24,6 +24,9 @@ export default function ProductosPage() {
   const [cargando, setCargando] = useState(true)
   const [q, setQ] = useState('')
   const [edit, setEdit] = useState<Form | null>(null)
+  const [sucs, setSucs] = useState<{ id: string; nombre: string }[]>([])
+  // Overrides de precio por sucursal del producto en edición: { sucId: 'precio en pesos' }
+  const [precios, setPrecios] = useState<Record<string, string>>({})
 
   async function cargar() {
     try { const r = await fetch('/api/productos'); setItems(await r.json()) } finally { setCargando(false) }
@@ -31,13 +34,19 @@ export default function ProductosPage() {
   useEffect(() => {
     cargar()
     fetch('/api/categorias').then(r => r.json()).then(setCats)
+    fetch('/api/sucursales').then(r => r.json()).then(setSucs)
   }, [])
 
   function nuevo() {
+    setPrecios({})
     setEdit({ descripcion: '', categoria: cats[0]?.id ?? 'varios', precioStr: '', codigo_barras: '', fraccionable: false, precio_variable: false, cantidad: 0, activo: true })
   }
-  function editar(p: Producto) {
+  async function editar(p: Producto) {
+    setPrecios({})
     setEdit({ id: p.id, descripcion: p.descripcion, categoria: p.categoria, precioStr: (p.precio_centavos / 100).toFixed(2), codigo_barras: p.codigo_barras ?? '', fraccionable: p.fraccionable, precio_variable: p.precio_variable, cantidad: p.cantidad, activo: p.activo })
+    const r = await fetch(`/api/productos/${p.id}/precios`)
+    const ov: { sucursal_id: string; precio_centavos: number }[] = await r.json()
+    setPrecios(Object.fromEntries(ov.map(o => [o.sucursal_id, (o.precio_centavos / 100).toFixed(2)])))
   }
 
   async function guardar() {
@@ -49,8 +58,14 @@ export default function ProductosPage() {
       fraccionable: edit.fraccionable, precio_variable: edit.precio_variable,
       cantidad: edit.cantidad, activo: edit.activo,
     }
-    if (edit.id) await fetch(`/api/productos/${edit.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    else await fetch('/api/productos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    let pid = edit.id
+    if (pid) await fetch(`/api/productos/${pid}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    else { const r = await fetch('/api/productos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); pid = (await r.json()).id }
+    // Overrides de precio por sucursal
+    if (pid) {
+      const overrides = sucs.map(s => ({ sucursal_id: s.id, precio_centavos: precios[s.id] ? Math.round(Number(precios[s.id].replace(',', '.')) * 100) : null }))
+      await fetch(`/api/productos/${pid}/precios`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ overrides }) })
+    }
     setEdit(null); await cargar()
   }
   async function borrar(id: string) {
@@ -126,6 +141,21 @@ export default function ProductosPage() {
               <label className="text-xs text-slate-400">Stock
                 <input type="number" value={edit.cantidad} onChange={e => setEdit({ ...edit, cantidad: Number(e.target.value) })} className={inputCls} />
               </label>
+              {sucs.length > 0 && (
+                <div className="col-span-2 border-t border-slate-800 pt-3">
+                  <p className="text-xs text-slate-500 mb-2">Precio por sucursal (opcional — vacío = usa el precio base)</p>
+                  <div className="space-y-2">
+                    {sucs.map(s => (
+                      <div key={s.id} className="flex items-center gap-2">
+                        <span className="text-sm text-slate-300 flex-1 truncate">{s.nombre}</span>
+                        <input value={precios[s.id] ?? ''} onChange={e => setPrecios(p => ({ ...p, [s.id]: e.target.value }))}
+                          inputMode="decimal" placeholder={edit.precioStr || 'base'}
+                          className="w-28 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-slate-50 text-sm text-right" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <label className="flex items-center gap-2 text-slate-300 text-sm mt-5">
                 <input type="checkbox" checked={edit.fraccionable} onChange={e => setEdit({ ...edit, fraccionable: e.target.checked })} /> Fraccionable (kg)
               </label>

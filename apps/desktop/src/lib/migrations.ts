@@ -209,4 +209,13 @@ export const migrations = [
       ALTER TABLE descuentos ADD COLUMN medio_pago TEXT;
     `,
   },
+  {
+    description: 'Precios por sucursal (override del precio base) — Fase 6',
+    sql: `
+      CREATE TABLE IF NOT EXISTS precios_sucursal (
+        producto_id     TEXT PRIMARY KEY,
+        precio_centavos INTEGER NOT NULL
+      );
+    `,
+  },
 ]

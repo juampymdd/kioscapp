@@ -117,6 +117,25 @@ export const proveedores = pgTable('proveedores', {
   index('idx_proveedores_local').on(t.local_id),
 ])
 
+// Compras a proveedores (registro de costos/reposición), administradas desde la web.
+export const compras = pgTable('compras', {
+  ...syncFields,
+  user_id:        text('user_id').notNull(),
+  sucursal_id:    text('sucursal_id'),
+  proveedor_id:   text('proveedor_id'),
+  fecha:          text('fecha').notNull(),
+  total_centavos: integer('total_centavos').notNull().default(0),
+  notas:          text('notas'),
+}, t => [index('idx_compras_user').on(t.user_id)])
+
+// Precio por sucursal (override opcional del precio base del producto).
+export const precios_sucursal = pgTable('precios_sucursal', {
+  ...syncFields,
+  sucursal_id:     text('sucursal_id').notNull(),
+  producto_id:     text('producto_id').notNull(),
+  precio_centavos: integer('precio_centavos').notNull(),
+}, t => [index('idx_precios_sucursal').on(t.sucursal_id)])
+
 // Platform tables — not synced from desktop, managed via web dashboard
 
 export const users = pgTable('users', {

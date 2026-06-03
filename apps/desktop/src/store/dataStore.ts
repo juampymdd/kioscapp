@@ -22,6 +22,7 @@ export interface DataStore {
   getProductoPorBarcode(barcode: string): Promise<Producto | null>
   getProductoPorId(id: string): Promise<Producto | null>
   upsertProducto(p: Producto): Promise<void>
+  reemplazarPreciosSucursal(lista: { producto_id: string; precio_centavos: number }[]): Promise<void>
 
   // ── Ventas (append-only) ──────────────────────────────────────────────────
   crearVenta(venta: Omit<Venta, 'sync_status'>): Promise<void>

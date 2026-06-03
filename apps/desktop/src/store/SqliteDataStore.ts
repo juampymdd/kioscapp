@@ -21,7 +21,8 @@ function mapProducto(r: Row): Produto {
     codigo_barras: (r.codigo_barras as string | null) ?? null,
     descripcion: r.descripcion as string,
     categoria: r.categoria as Produto['categoria'],
-    precio_centavos: r.precio_centavos as number,
+    // precio_override = override de precio por sucursal (LEFT JOIN precios_sucursal); si no, base.
+    precio_centavos: (r.precio_override as number | null) ?? (r.precio_centavos as number),
     fraccionable: bool(r.fraccionable),
     precio_variable: bool(r.precio_variable),
     unidad_medida: r.unidad_medida as string,
@@ -203,7 +204,9 @@ export class SqliteDataStore implements DataStore {
 
   async getProductos(): Promise<Producto[]> {
     const rows = await this.db.select<Row[]>(
-      `SELECT * FROM productos WHERE activo = 1 AND deleted_at IS NULL ORDER BY descripcion`,
+      `SELECT p.*, ps.precio_centavos AS precio_override FROM productos p
+       LEFT JOIN precios_sucursal ps ON ps.producto_id = p.id
+       WHERE p.activo = 1 AND p.deleted_at IS NULL ORDER BY p.descripcion`,
     )
     return rows.map(mapProducto)
   }
@@ -217,7 +220,9 @@ export class SqliteDataStore implements DataStore {
 
   async getProductoPorBarcode(barcode: string): Promise<Producto | null> {
     const rows = await this.db.select<Row[]>(
-      `SELECT * FROM productos WHERE codigo_barras = $1 AND activo = 1 AND deleted_at IS NULL LIMIT 1`,
+      `SELECT p.*, ps.precio_centavos AS precio_override FROM productos p
+       LEFT JOIN precios_sucursal ps ON ps.producto_id = p.id
+       WHERE p.codigo_barras = $1 AND p.activo = 1 AND p.deleted_at IS NULL LIMIT 1`,
       [barcode],
     )
     return rows.length ? mapProducto(rows[0]) : null
@@ -225,10 +230,23 @@ export class SqliteDataStore implements DataStore {
 
   async getProductoPorId(id: string): Promise<Producto | null> {
     const rows = await this.db.select<Row[]>(
-      `SELECT * FROM productos WHERE id = $1 LIMIT 1`,
+      `SELECT p.*, ps.precio_centavos AS precio_override FROM productos p
+       LEFT JOIN precios_sucursal ps ON ps.producto_id = p.id
+       WHERE p.id = $1 LIMIT 1`,
       [id],
     )
     return rows.length ? mapProducto(rows[0]) : null
+  }
+
+  /** Reemplaza los overrides de precio por sucursal (bajados del central). */
+  async reemplazarPreciosSucursal(lista: { producto_id: string; precio_centavos: number }[]): Promise<void> {
+    await this.db.execute(`DELETE FROM precios_sucursal`)
+    for (const o of lista) {
+      await this.db.execute(
+        `INSERT OR REPLACE INTO precios_sucursal (producto_id, precio_centavos) VALUES ($1,$2)`,
+        [o.producto_id, o.precio_centavos],
+      )
+    }
   }
 
   async upsertProducto(p: Producto): Promise<void> {

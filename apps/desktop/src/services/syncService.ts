@@ -92,6 +92,7 @@ class SyncService {
 
       if (totalPending === 0) {
         try { await this.pullDescuentos(store) } catch (e) { console.warn('[sync] pull descuentos falló:', e) }
+      try { await this.pullPrecios(store) } catch (e) { console.warn('[sync] pull precios falló:', e) }
         this.setState({ status: 'ok', pendingCount: 0, lastSync: new Date(), lastError: null })
         this.running = false
         return
@@ -124,6 +125,7 @@ class SyncService {
       }
 
       try { await this.pullDescuentos(store) } catch (e) { console.warn('[sync] pull descuentos falló:', e) }
+      try { await this.pullPrecios(store) } catch (e) { console.warn('[sync] pull precios falló:', e) }
 
       this.setState({ status: 'ok', pendingCount: 0, lastSync: new Date(), lastError: null })
     } catch (err) {
@@ -233,6 +235,18 @@ class SyncService {
       if (res.ok) await store.marcarDescuentoSincronizado(d.id)
     }
     return pendientes.length
+  }
+
+  /** Baja los overrides de precio por sucursal y los aplica localmente. */
+  async pullPrecios(store: SqliteDataStore): Promise<number> {
+    if (!this.backendUrl || !this.syncSecret || this.localId === 'local-demo') return 0
+    const res = await fetch(`${this.backendUrl}/api/puntos-venta/${this.localId}/precios`, {
+      headers: { 'x-sync-secret': this.syncSecret },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json() as { precios: { producto_id: string; precio_centavos: number }[] }
+    await store.reemplazarPreciosSucursal(data.precios)
+    return data.precios.length
   }
 
   /** Baja el catálogo central, reconcilia (inactiva las que ya no vienen) y cachea sucursal_id. */
