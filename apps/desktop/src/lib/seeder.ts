@@ -4,6 +4,7 @@
  */
 import type { SqliteDataStore } from '../store/SqliteDataStore'
 import type { Producto } from '@kioscapp/shared'
+import { CATEGORIAS_SEED } from '@kioscapp/shared'
 
 const LOCAL_ID = import.meta.env.VITE_LOCAL_ID ?? 'local-demo'
 
@@ -62,6 +63,19 @@ export const PRODUCTOS_DEMO: Producto[] = [
 ]
 
 export async function seedIfEmpty(store: SqliteDataStore): Promise<void> {
+  // Categorías: sembrar siempre que falten (independiente de productos).
+  const cats = await store.getAllCategorias()
+  if (cats.length === 0) {
+    const ts = new Date().toISOString()
+    for (const c of CATEGORIAS_SEED) {
+      await store.upsertCategoria({
+        ...c, color: null, activo: true,
+        created_at: ts, updated_at: ts, local_id: LOCAL_ID,
+        sync_status: 'synced', deleted_at: null,
+      })
+    }
+  }
+
   const productos = await store.getProductos()
   if (productos.length > 0) return
 

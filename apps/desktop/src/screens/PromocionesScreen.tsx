@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Tag, Trash2, Plus } from 'lucide-react'
-import type { Descuento, Producto, CategoriaProducto } from '@kioscapp/shared'
-import { CATEGORIA_LABEL, CATEGORIA_ORDEN } from '@kioscapp/shared'
+import type { Descuento, Producto, Categoria } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { useCartStore } from '../store/cartStore'
 import ScreenHeader from '../components/ScreenHeader'
@@ -12,10 +11,11 @@ export default function PromocionesScreen() {
   const [promos, setPromos]       = useState<Descuento[]>([])
   const [cargando, setCargando]   = useState(true)
   const [productos, setProductos] = useState<Producto[]>([])
+  const [cats, setCats]           = useState<Categoria[]>([])
   const [mostrarForm, setMostrarForm] = useState(false)
 
   const [objetivo, setObjetivo]   = useState<'categoria' | 'producto'>('categoria')
-  const [categoria, setCategoria] = useState<CategoriaProducto>('bebidas')
+  const [categoria, setCategoria] = useState<string>('')
   const [productoId, setProductoId] = useState('')
   const [tipo, setTipo]           = useState<'porcentaje' | 'monto'>('porcentaje')
   const [valor, setValor]         = useState('10')
@@ -30,6 +30,7 @@ export default function PromocionesScreen() {
   useEffect(() => {
     cargar()
     getDataStore().getProductos().then(setProductos)
+    getDataStore().getCategorias().then(cs => { setCats(cs); if (cs[0]) setCategoria(c => c || cs[0].id) })
   }, [])
 
   /** Refresca el catálogo del carrito tras tocar promos. */
@@ -81,7 +82,7 @@ export default function PromocionesScreen() {
   const valorTxt = (d: Descuento) => d.tipo === 'porcentaje' ? `${d.valor}%` : formatCentavos(d.valor)
   const objetivoTxt = (d: Descuento) => d.objetivo === 'producto'
     ? (productos.find(p => p.id === d.producto_id)?.descripcion ?? 'Producto')
-    : (CATEGORIA_LABEL[d.categoria as CategoriaProducto] ?? d.categoria ?? '—')
+    : (cats.find(c => c.id === d.categoria)?.nombre ?? d.categoria ?? '—')
 
   return (
     <div className="flex flex-col h-full bg-slate-950 overflow-hidden">
@@ -109,9 +110,9 @@ export default function PromocionesScreen() {
 
             {objetivo === 'categoria' ? (
               <label className="text-xs text-slate-400">Categoría
-                <select value={categoria} onChange={e => setCategoria(e.target.value as CategoriaProducto)}
+                <select value={categoria} onChange={e => setCategoria(e.target.value)}
                   className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
-                  {CATEGORIA_ORDEN.map(c => <option key={c} value={c}>{CATEGORIA_LABEL[c]}</option>)}
+                  {cats.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                 </select>
               </label>
             ) : (

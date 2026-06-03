@@ -19,16 +19,13 @@ pub struct ItemTicket {
 
 fn categoria_default() -> String { "varios".to_string() }
 
-// Orden fijo de categorías + etiqueta legible. Espejo de CATEGORIA_ORDEN/LABEL en shared.
-const CATEGORIA_ORDEN: [(&str, &str); 7] = [
-    ("cigarrillos",     "Cigarrillos"),
-    ("bebidas",         "Bebidas"),
-    ("golosinas",       "Golosinas"),
-    ("kiosco",          "Kiosco"),
-    ("recarga_sube",    "SUBE"),
-    ("recarga_celular", "Celular"),
-    ("varios",          "Varios"),
-];
+#[derive(Deserialize)]
+pub struct CategoriaTicket {
+    pub id: String,
+    pub nombre: String,
+    #[serde(default)]
+    pub orden: i64,
+}
 
 #[derive(Deserialize)]
 pub struct DatosTicket {
@@ -40,6 +37,8 @@ pub struct DatosTicket {
     pub medio_pago: String,
     pub monto_recibido_centavos: i64,
     pub vuelto_centavos: i64,
+    #[serde(default)]
+    pub categorias: Vec<CategoriaTicket>,
 }
 
 // Strip accents/special chars so bytes are ASCII-safe for any ESC/POS printer
@@ -100,11 +99,23 @@ pub fn build_escpos(datos: &DatosTicket, width: usize) -> Vec<u8> {
     b.extend_from_slice("=".repeat(width).as_bytes());
     b.push(0x0A);
 
-    // Agrupado por categoria (orden fijo): titulo en negrita, luego cada item en
-    // dos lineas (nombre / "cant x unit ... total") + linea de descuento si > 0.
-    for (cat_key, cat_label) in CATEGORIA_ORDEN.iter() {
+    // Orden de categorias: las del payload (por `orden`), luego ids de items que no
+    // estan en el catalogo (label = id). Espejo del buildLineas de TS.
+    let mut cats: Vec<&CategoriaTicket> = datos.categorias.iter().collect();
+    cats.sort_by_key(|c| c.orden);
+    let mut orden: Vec<(String, String)> = cats.iter().map(|c| (c.id.clone(), c.nombre.clone())).collect();
+    for item in &datos.items {
+        let id = &item.categoria;
+        if !orden.iter().any(|(cid, _)| cid == id) {
+            orden.push((id.clone(), id.clone()));
+        }
+    }
+
+    // Agrupado por categoria: titulo en negrita, luego cada item en dos lineas
+    // (nombre / "cant x unit ... total") + linea de descuento si > 0.
+    for (cat_id, cat_label) in orden.iter() {
         let items: Vec<&ItemTicket> =
-            datos.items.iter().filter(|i| i.categoria == *cat_key).collect();
+            datos.items.iter().filter(|i| i.categoria == *cat_id).collect();
         if items.is_empty() { continue; }
 
         // Titulo categoria en negrita

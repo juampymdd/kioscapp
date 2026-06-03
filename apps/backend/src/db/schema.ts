@@ -96,6 +96,15 @@ export const movimientos_caja = pgTable('movimientos_caja', {
   index('idx_movimientos_caja').on(t.caja_id),
 ])
 
+export const categorias = pgTable('categorias', {
+  ...syncFields,
+  nombre: text('nombre').notNull(),
+  icono:  text('icono').notNull().default('Package'),
+  color:  text('color'),
+  orden:  integer('orden').notNull().default(100),
+  activo: boolean('activo').notNull().default(true),
+}, t => [index('idx_categorias_local').on(t.local_id)])
+
 export const proveedores = pgTable('proveedores', {
   ...syncFields,
   nombre:   text('nombre').notNull(),

@@ -108,6 +108,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         medio_pago:                 medio,
         monto_recibido_centavos:    medio === 'efectivo' ? recibido : totalCentavos,
         vuelto_centavos:            vueltoCentavos,
+        categorias:                 (await store.getCategorias()).map(c => ({ id: c.id, nombre: c.nombre, orden: c.orden })),
       }
 
       await store.crearVenta(venta)

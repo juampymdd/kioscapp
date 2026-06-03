@@ -9,6 +9,7 @@
  */
 import { getDataStore } from '../store/dataStore'
 import type { SqliteDataStore } from '../store/SqliteDataStore'
+import type { Categoria } from '@kioscapp/shared'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? ''
 const LOCAL_ID    = import.meta.env.VITE_LOCAL_ID ?? 'local-demo'
@@ -74,6 +75,15 @@ async function pushPendientes(): Promise<void> {
           payload.movimientos_caja = [...(payload.movimientos_caja as unknown[]), ...rows]
         }
         break
+      case 'categorias':
+        payload.categorias = []
+        for (const id of ids) {
+          const rows = await (s as any).db.select(`SELECT * FROM categorias WHERE id=$1`, [id])
+          // SQLite guarda activo como 0/1; el backend espera boolean.
+          payload.categorias = [...(payload.categorias as unknown[]),
+            ...rows.map((r: any) => ({ ...r, activo: r.activo === 1 || r.activo === true }))]
+        }
+        break
     }
   }
 
@@ -100,10 +110,20 @@ async function pullCatalogo(since?: string): Promise<void> {
   const data = await res.json() as {
     productos: unknown[]
     stock: unknown[]
+    categorias?: unknown[]
     generado_at: string
   }
 
   const store = getDataStore() as SqliteDataStore
+  for (const c of data.categorias ?? []) {
+    const row = c as any
+    await store.upsertCategoria({
+      ...(row as Categoria),
+      color: row.color ?? null,
+      activo: row.activo === true || row.activo === 1,
+      sync_status: 'synced',
+    })
+  }
   for (const p of data.productos) {
     await store.upsertProducto(p as any)
   }

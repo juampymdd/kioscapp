@@ -1,5 +1,4 @@
 import type { CategoriaProducto } from '@kioscapp/shared'
-import { CATEGORIA_LABEL, CATEGORIA_ORDEN } from '@kioscapp/shared'
 
 export interface ItemTicket {
   descripcion: string
@@ -12,6 +11,13 @@ export interface ItemTicket {
   descuento_detalle?: string | null
 }
 
+/** Categoría para agrupar/ordenar el ticket (id, label, orden). */
+export interface CategoriaTicket {
+  id: string
+  nombre: string
+  orden: number
+}
+
 export interface DatosTicket {
   nombre_comercio: string
   fecha: string
@@ -21,6 +27,8 @@ export interface DatosTicket {
   medio_pago: string
   monto_recibido_centavos: number
   vuelto_centavos: number
+  /** Categorías (id→nombre, orden) para agrupar. Si falta, se agrupa por id. */
+  categorias?: CategoriaTicket[]
 }
 
 /** Ancho de papel térmico: 58 mm (32 cols) u 80 mm (48 cols). */
@@ -61,13 +69,20 @@ export function buildLineas(d: DatosTicket, ancho: AnchoPapel = '58'): LineaTick
   lines.push({ tipo: 'texto', texto: center(d.fecha, W), centrado: true })
   lines.push({ tipo: 'sep', char: '=' })
 
-  // Agrupado por categoría (orden fijo). Por ítem: nombre / "cant x unit ... total"
-  // / "-descuento" (solo si hay descuento).
-  for (const cat of CATEGORIA_ORDEN) {
-    const items = d.items.filter(i => i.categoria === cat)
+  // Agrupado por categoría (orden dinámico del catálogo). Categorías de ítems cuyo id
+  // ya no exista van al final con el id como label.
+  const cats = [...(d.categorias ?? [])].sort((a, b) => a.orden - b.orden)
+  const usados = [...new Set(d.items.map(i => i.categoria))]
+  const orden: { id: string; nombre: string }[] = [
+    ...cats.filter(c => usados.includes(c.id)).map(c => ({ id: c.id, nombre: c.nombre })),
+    ...usados.filter(id => !cats.some(c => c.id === id)).map(id => ({ id, nombre: id })),
+  ]
+
+  for (const cat of orden) {
+    const items = d.items.filter(i => i.categoria === cat.id)
     if (items.length === 0) continue
 
-    lines.push({ tipo: 'texto', texto: CATEGORIA_LABEL[cat], negrita: true })
+    lines.push({ tipo: 'texto', texto: cat.nombre, negrita: true })
 
     for (const item of items) {
       const cant = Number.isInteger(item.cantidad) ? `${item.cantidad}` : item.cantidad.toFixed(2)

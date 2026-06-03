@@ -1,35 +1,17 @@
 import type { SyncFields } from './sync'
 
-export type CategoriaProducto =
-  | 'cigarrillos'
-  | 'bebidas'
-  | 'golosinas'
-  | 'kiosco'
-  | 'recarga_sube'
-  | 'recarga_celular'
-  | 'varios'
+/** Id de categoría (slug). Antes era una unión fija; ahora las categorías son dato. */
+export type CategoriaProducto = string
 
-/** Etiqueta legible por categoría. Fuente única (UI + ticket). */
-export const CATEGORIA_LABEL: Record<CategoriaProducto, string> = {
-  cigarrillos:     'Cigarrillos',
-  bebidas:         'Bebidas',
-  golosinas:       'Golosinas',
-  kiosco:          'Kiosco',
-  recarga_sube:    'SUBE',
-  recarga_celular: 'Celular',
-  varios:          'Varios',
-}
+// Derivados del seed — solo fallback/compat. La fuente de verdad es la tabla `categorias`.
+import { CATEGORIAS_SEED } from './categoria'
 
-/** Orden fijo de impresión/agrupado de categorías en el ticket. */
-export const CATEGORIA_ORDEN: CategoriaProducto[] = [
-  'cigarrillos',
-  'bebidas',
-  'golosinas',
-  'kiosco',
-  'recarga_sube',
-  'recarga_celular',
-  'varios',
-]
+/** Etiqueta por defecto de las categorías sembradas (fallback). */
+export const CATEGORIA_LABEL: Record<string, string> =
+  Object.fromEntries(CATEGORIAS_SEED.map(c => [c.id, c.nombre]))
+
+/** Orden por defecto de las categorías sembradas (fallback). */
+export const CATEGORIA_ORDEN: string[] = CATEGORIAS_SEED.map(c => c.id)
 
 export interface Producto extends SyncFields {
   codigo_barras: string | null

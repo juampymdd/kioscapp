@@ -1,6 +1,6 @@
 import Database from '@tauri-apps/plugin-sql'
 import type {
-  Producto, Venta, VentaItem, Caja, MovimientoCaja, Stock, Proveedor, Descuento,
+  Producto, Venta, VentaItem, Caja, MovimientoCaja, Stock, Proveedor, Descuento, Categoria,
 } from '@kioscapp/shared'
 import type { DataStore } from './dataStore'
 import { migrations } from '../lib/migrations'
@@ -131,6 +131,22 @@ function mapVentaItem(r: Row): VentaItem {
     descuento_centavos: (r.descuento_centavos as number) ?? 0,
     descuento_origen: (r.descuento_origen as VentaItem['descuento_origen']) ?? null,
     descuento_detalle: (r.descuento_detalle as string | null) ?? null,
+  }
+}
+
+function mapCategoria(r: Row): Categoria {
+  return {
+    id: r.id as string,
+    nombre: r.nombre as string,
+    icono: (r.icono as string) ?? 'Package',
+    color: (r.color as string | null) ?? null,
+    orden: (r.orden as number) ?? 100,
+    activo: (r.activo as number) === 1,
+    created_at: (r.created_at as string) ?? '',
+    updated_at: (r.updated_at as string) ?? '',
+    local_id: (r.local_id as string) ?? '',
+    sync_status: (r.sync_status as 'pending' | 'synced') ?? 'pending',
+    deleted_at: (r.deleted_at as string | null) ?? null,
   }
 }
 
@@ -572,10 +588,49 @@ export class SqliteDataStore implements DataStore {
     )
   }
 
+  // ── Categorías ─────────────────────────────────────────────────────────────
+
+  async getCategorias(): Promise<Categoria[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM categorias WHERE activo=1 AND deleted_at IS NULL ORDER BY orden, nombre`,
+    )
+    return rows.map(mapCategoria)
+  }
+
+  async getAllCategorias(): Promise<Categoria[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM categorias WHERE deleted_at IS NULL ORDER BY orden, nombre`,
+    )
+    return rows.map(mapCategoria)
+  }
+
+  async upsertCategoria(c: Categoria): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO categorias
+         (id, nombre, icono, color, orden, activo, created_at, updated_at, local_id, sync_status, deleted_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       ON CONFLICT(id) DO UPDATE SET
+         nombre=excluded.nombre, icono=excluded.icono, color=excluded.color,
+         orden=excluded.orden, activo=excluded.activo, updated_at=excluded.updated_at,
+         sync_status=excluded.sync_status, deleted_at=excluded.deleted_at`,
+      [
+        c.id, c.nombre, c.icono, c.color, c.orden, c.activo ? 1 : 0,
+        c.created_at, c.updated_at, c.local_id, c.sync_status, c.deleted_at,
+      ],
+    )
+  }
+
+  async eliminarCategoria(id: string): Promise<void> {
+    await this.db.execute(
+      `UPDATE categorias SET deleted_at=$1, sync_status='pending', updated_at=$1 WHERE id=$2`,
+      [now(), id],
+    )
+  }
+
   // ── Sync ───────────────────────────────────────────────────────────────────
 
   async getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>> {
-    const tablas = ['productos', 'stock', 'cajas', 'ventas', 'venta_items', 'movimientos_caja']
+    const tablas = ['productos', 'stock', 'cajas', 'ventas', 'venta_items', 'movimientos_caja', 'categorias']
     const result: Array<{ tabla: string; ids: string[] }> = []
     for (const tabla of tablas) {
       const rows = await this.db.select<{ id: string }[]>(

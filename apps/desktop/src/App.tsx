@@ -5,11 +5,13 @@ import AbrirCaja from './screens/AbrirCaja'
 import SetupScreen from './screens/SetupScreen'
 import POSScreen from './screens/POSScreen'
 import ProductosScreen from './screens/ProductosScreen'
+import CategoriasScreen from './screens/CategoriasScreen'
 import StockScreen from './screens/StockScreen'
 import ProveedoresScreen from './screens/ProveedoresScreen'
 import ReportesScreen from './screens/ReportesScreen'
 import VentasScreen from './screens/VentasScreen'
 import PromocionesScreen from './screens/PromocionesScreen'
+import AyudaScreen from './screens/AyudaScreen'
 import Sidebar, { type ScreenId } from './components/Sidebar'
 import CerrarCaja from './screens/CerrarCaja'
 import ConfigScreen from './screens/ConfigScreen'
@@ -95,11 +97,13 @@ export default function App() {
         <main className="flex-1 min-h-0 overflow-hidden">
           {screen === 'pos'         && <POSScreen />}
           {screen === 'productos'   && <ProductosScreen />}
+          {screen === 'categorias'  && <CategoriasScreen />}
           {screen === 'stock'       && <StockScreen />}
           {screen === 'proveedores' && <ProveedoresScreen />}
           {screen === 'ventas'      && <VentasScreen />}
           {screen === 'promociones' && <PromocionesScreen />}
           {screen === 'reportes'    && <ReportesScreen />}
+          {screen === 'ayuda'       && <AyudaScreen />}
         </main>
       </div>
 

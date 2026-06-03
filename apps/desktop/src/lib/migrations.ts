@@ -174,4 +174,22 @@ export const migrations = [
       ALTER TABLE descuentos ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'synced';
     `,
   },
+  {
+    description: 'Tabla categorias — Fase 4',
+    sql: `
+      CREATE TABLE IF NOT EXISTS categorias (
+        id           TEXT PRIMARY KEY,
+        nombre       TEXT NOT NULL,
+        icono        TEXT NOT NULL DEFAULT 'Package',
+        color        TEXT,
+        orden        INTEGER NOT NULL DEFAULT 100,
+        activo       INTEGER NOT NULL DEFAULT 1,
+        created_at   TEXT NOT NULL DEFAULT '',
+        updated_at   TEXT NOT NULL DEFAULT '',
+        local_id     TEXT NOT NULL DEFAULT '',
+        sync_status  TEXT NOT NULL DEFAULT 'pending',
+        deleted_at   TEXT
+      );
+    `,
+  },
 ]

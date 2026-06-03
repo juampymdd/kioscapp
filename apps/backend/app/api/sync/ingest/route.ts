@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
-import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta } from '@/src/db/schema'
+import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta, categorias } from '@/src/db/schema'
 import { optionsResponse, withCors } from '@/src/lib/cors'
 import { and, eq } from 'drizzle-orm'
 
@@ -11,6 +11,7 @@ type IngestPayload = {
   cajas?: (typeof cajas.$inferInsert)[]
   movimientos_caja?: (typeof movimientos_caja.$inferInsert)[]
   proveedores?: (typeof proveedores.$inferInsert)[]
+  categorias?: (typeof categorias.$inferInsert)[]
 }
 
 async function checkAuth(req: NextRequest, localId: string): Promise<boolean> {
@@ -85,6 +86,22 @@ export async function POST(req: NextRequest) {
         .values(body.proveedores.map(p => ({ ...p, sync_status: 'synced' as const })))
         .onConflictDoNothing()
       ingested.proveedores = body.proveedores.length
+    }
+
+    if (body.categorias?.length) {
+      for (const c of body.categorias) {
+        await db.insert(categorias)
+          .values({ ...c, sync_status: 'synced' as const })
+          .onConflictDoUpdate({
+            target: categorias.id,
+            set: {
+              nombre: c.nombre, icono: c.icono, color: c.color ?? null,
+              orden: c.orden, activo: c.activo, updated_at: c.updated_at,
+              deleted_at: c.deleted_at ?? null,
+            },
+          })
+      }
+      ingested.categorias = body.categorias.length
     }
 
     return withCors(NextResponse.json({ ok: true, ingested }))

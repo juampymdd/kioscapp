@@ -13,6 +13,7 @@ import type { Caja, MovimientoCaja } from '@kioscapp/shared'
 import type { Stock } from '@kioscapp/shared'
 import type { Proveedor } from '@kioscapp/shared'
 import type { Descuento } from '@kioscapp/shared'
+import type { Categoria } from '@kioscapp/shared'
 
 export interface DataStore {
   // ── Productos ─────────────────────────────────────────────────────────────
@@ -61,6 +62,12 @@ export interface DataStore {
   setDescuentoActivo(id: string, activo: boolean): Promise<void>
   eliminarDescuentoLocal(id: string): Promise<void>
   reconciliarDescuentosCentral(idsVigentes: string[]): Promise<void>
+
+  // ── Categorías ─────────────────────────────────────────────────────────────
+  getCategorias(): Promise<Categoria[]>
+  getAllCategorias(): Promise<Categoria[]>
+  upsertCategoria(c: Categoria): Promise<void>
+  eliminarCategoria(id: string): Promise<void>
 
   // ── Sincronización ────────────────────────────────────────────────────────
   getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>>

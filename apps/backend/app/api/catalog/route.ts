@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
-import { productos, stock } from '@/src/db/schema'
-import { gte } from 'drizzle-orm'
+import { productos, stock, categorias } from '@/src/db/schema'
+import { gte, isNull } from 'drizzle-orm'
 import { optionsResponse, withCors } from '@/src/lib/cors'
 
 export const dynamic = 'force-dynamic'
@@ -12,18 +12,22 @@ export async function GET(req: NextRequest) {
   const db = getDb()
   const since = req.nextUrl.searchParams.get('since')
 
-  const [productosData, stockData] = await Promise.all([
+  const [productosData, stockData, categoriasData] = await Promise.all([
     since
       ? db.select().from(productos).where(gte(productos.updated_at, since))
       : db.select().from(productos),
     since
       ? db.select().from(stock).where(gte(stock.updated_at, since))
       : db.select().from(stock),
+    since
+      ? db.select().from(categorias).where(gte(categorias.updated_at, since))
+      : db.select().from(categorias).where(isNull(categorias.deleted_at)),
   ])
 
   return withCors(NextResponse.json({
     productos: productosData,
     stock: stockData,
+    categorias: categoriasData,
     generado_at: new Date().toISOString(),
   }))
 }

@@ -1,24 +1,11 @@
 import { useEffect, useState } from 'react'
-import {
-  Cigarette, GlassWater, Candy, ShoppingBag, Bus, Smartphone, Package,
-  LayoutGrid, type LucideIcon,
-} from 'lucide-react'
-import type { CategoriaProducto, Producto } from '@kioscapp/shared'
-import { CATEGORIA_LABEL } from '@kioscapp/shared'
+import { LayoutGrid } from 'lucide-react'
+import type { CategoriaProducto, Producto, Categoria } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { useCartStore } from '../store/cartStore'
 import { formatCentavos } from '../lib/money'
 import Skeleton from './Skeleton'
-
-const CATEGORIA_ICONS: Record<CategoriaProducto, LucideIcon> = {
-  cigarrillos:     Cigarette,
-  bebidas:         GlassWater,
-  golosinas:       Candy,
-  kiosco:          ShoppingBag,
-  recarga_sube:    Bus,
-  recarga_celular: Smartphone,
-  varios:          Package,
-}
+import CategoriaIcon from './CategoriaIcon'
 
 interface Props {
   filtro: string
@@ -26,18 +13,20 @@ interface Props {
 
 export default function ProductGrid({ filtro }: Props) {
   const [productos, setProductos] = useState<Producto[]>([])
+  const [cats, setCats]           = useState<Categoria[]>([])
   const [cargando, setCargando]   = useState(true)
   const [categoria, setCategoria] = useState<CategoriaProducto | null>(null)
   const addItem = useCartStore(s => s.addItem)
 
   useEffect(() => {
+    getDataStore().getCategorias().then(setCats)
     getDataStore().getProductos().then(setProductos).finally(() => setCargando(false))
   }, [])
 
-  // Categorías que realmente tienen productos
-  const categoriasConProductos = Array.from(
-    new Set(productos.map(p => p.categoria)),
-  ) as CategoriaProducto[]
+  // Categorías (en orden) que realmente tienen productos
+  const conProductos = new Set(productos.map(p => p.categoria))
+  const categoriasConProductos = cats.filter(c => conProductos.has(c.id))
+  const catById = (id: string) => cats.find(c => c.id === id)
 
   const q = filtro.trim().toLowerCase()
   const filtrados = productos.filter(p => {
@@ -66,12 +55,11 @@ export default function ProductGrid({ filtro }: Props) {
           Todos
         </button>
         {categoriasConProductos.map(cat => {
-          const Icon = CATEGORIA_ICONS[cat]
-          const active = categoria === cat
+          const active = categoria === cat.id
           return (
             <button
-              key={cat}
-              onClick={() => setCategoria(active ? null : cat)}
+              key={cat.id}
+              onClick={() => setCategoria(active ? null : cat.id)}
               aria-pressed={active}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
                           transition-colors cursor-pointer
@@ -81,8 +69,8 @@ export default function ProductGrid({ filtro }: Props) {
                             : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                           }`}
             >
-              <Icon size={11} />
-              {CATEGORIA_LABEL[cat]}
+              <CategoriaIcon name={cat.icono} size={11} />
+              {cat.nombre}
             </button>
           )
         })}
@@ -99,7 +87,7 @@ export default function ProductGrid({ filtro }: Props) {
           </div>
         ))}
         {!cargando && filtrados.map(p => {
-          const Icon = CATEGORIA_ICONS[p.categoria] ?? Package
+          const icono = catById(p.categoria)?.icono ?? 'Package'
           return (
             <button
               key={p.id}
@@ -112,13 +100,15 @@ export default function ProductGrid({ filtro }: Props) {
             >
               <div className="w-9 h-9 grid place-items-center rounded-lg bg-slate-700/60
                               group-hover:bg-blue-600/20 transition-colors mb-2 shrink-0">
-                <Icon size={18} className="text-slate-300 group-hover:text-blue-300 transition-colors" />
+                <CategoriaIcon name={icono} size={18} className="text-slate-300 group-hover:text-blue-300 transition-colors" />
               </div>
               <div className="text-white text-sm font-medium leading-snug line-clamp-2">
                 {p.descripcion}
               </div>
-              <div className="text-blue-400 font-bold mt-auto pt-1.5 text-base tabular-nums">
-                {formatCentavos(p.precio_centavos)}
+              <div className="mt-auto pt-2 border-t border-slate-700/70 group-hover:border-slate-600 transition-colors">
+                <span className="text-blue-400 font-bold text-lg tabular-nums tracking-tight">
+                  {formatCentavos(p.precio_centavos)}
+                </span>
               </div>
             </button>
           )

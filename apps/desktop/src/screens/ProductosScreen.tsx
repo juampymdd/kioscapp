@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Plus, X, Save, Package } from 'lucide-react'
-import type { CategoriaProducto, Producto } from '@kioscapp/shared'
+import type { Producto, Categoria } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos, parseCentavos, centavosToInputStr } from '../lib/money'
 import ScreenHeader from '../components/ScreenHeader'
 import Skeleton from '../components/Skeleton'
-
-const CATEGORIAS: CategoriaProducto[] = [
-  'bebidas', 'golosinas', 'cigarrillos', 'kiosco',
-  'recarga_sube', 'recarga_celular', 'varios',
-]
 
 const LOCAL_ID = import.meta.env.VITE_LOCAL_ID ?? 'local-demo'
 
@@ -34,6 +29,7 @@ function emptyProducto(): Producto {
 
 export default function ProductosScreen() {
   const [productos, setProductos] = useState<Producto[]>([])
+  const [cats, setCats] = useState<Categoria[]>([])
   const [cargando, setCargando] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [mostrarInactivos, setMostrarInactivos] = useState(false)
@@ -50,7 +46,10 @@ export default function ProductosScreen() {
     }
   }
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => {
+    cargar()
+    getDataStore().getCategorias().then(setCats)
+  }, [])
 
   const filtrados = productos.filter(p => {
     if (!mostrarInactivos && !p.activo) return false
@@ -168,7 +167,7 @@ export default function ProductosScreen() {
                               ${!p.activo ? 'opacity-40' : ''}`}
                 >
                   <td className="px-4 py-2.5 text-white font-medium">{p.descripcion}</td>
-                  <td className="px-4 py-2.5 text-slate-400 capitalize">{p.categoria.replace('_', ' ')}</td>
+                  <td className="px-4 py-2.5 text-slate-400">{cats.find(c => c.id === p.categoria)?.nombre ?? p.categoria}</td>
                   <td className="px-4 py-2.5 text-blue-400 text-right font-mono">
                     {formatCentavos(p.precio_centavos)}
                   </td>
@@ -237,12 +236,12 @@ export default function ProductosScreen() {
               <label className="text-slate-400 text-xs block mb-1">Categoría</label>
               <select
                 value={editando.categoria}
-                onChange={e => setEditando({ ...editando, categoria: e.target.value as CategoriaProducto })}
+                onChange={e => setEditando({ ...editando, categoria: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
                            text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                {CATEGORIAS.map(c => (
-                  <option key={c} value={c}>{c.replace('_', ' ')}</option>
+                {cats.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
                 ))}
               </select>
             </div>

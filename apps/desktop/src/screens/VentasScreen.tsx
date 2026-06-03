@@ -89,6 +89,7 @@ export default function VentasScreen() {
   async function reimprimir(v: Venta) {
     const its = itemsMap[v.id] ?? await getDataStore().getVentaItemsPorVenta(v.id)
     if (!itemsMap[v.id]) setItemsMap(prev => ({ ...prev, [v.id]: its }))
+    const cats = await getDataStore().getCategorias()
     setTicketDatos({
       nombre_comercio: nombreComercio,
       fecha: new Date(v.created_at).toLocaleString('es-AR', {
@@ -110,6 +111,7 @@ export default function VentasScreen() {
       medio_pago:              v.medio_pago,
       monto_recibido_centavos: v.monto_recibido_centavos,
       vuelto_centavos:         v.vuelto_centavos,
+      categorias:              cats.map(c => ({ id: c.id, nombre: c.nombre, orden: c.orden })),
     })
   }
 

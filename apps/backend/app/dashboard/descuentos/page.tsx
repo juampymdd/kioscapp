@@ -9,14 +9,14 @@ type Descuento = {
 }
 type Sucursal = { id: string; nombre: string }
 type Producto = { id: string; descripcion: string }
-
-const CATEGORIAS = ['cigarrillos', 'bebidas', 'golosinas', 'kiosco', 'recarga_sube', 'recarga_celular', 'varios']
+type Categoria = { id: string; nombre: string }
 
 export default function DescuentosPage() {
   const [items, setItems] = useState<Descuento[]>([])
   const [cargando, setCargando] = useState(true)
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [form, setForm] = useState({
     sucursal_id: '', objetivo: 'categoria', producto_id: '', categoria: 'bebidas',
     tipo: 'porcentaje', valor: 10,
@@ -33,6 +33,7 @@ export default function DescuentosPage() {
     cargar()
     fetch('/api/sucursales').then(r => r.json()).then(setSucursales)
     fetch('/api/catalog').then(r => r.json()).then(d => setProductos(d.productos ?? []))
+    fetch('/api/categorias').then(r => r.json()).then(setCategorias)
   }, [])
 
   async function crear() {
@@ -85,7 +86,7 @@ export default function DescuentosPage() {
           <label className="text-xs text-slate-400">Categoría
             <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}
               className="mt-1 w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-slate-50">
-              {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
           </label>
         ) : (
