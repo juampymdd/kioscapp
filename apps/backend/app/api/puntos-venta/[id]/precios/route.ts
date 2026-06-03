@@ -29,7 +29,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // Sin este catch, un throw devuelve la página de error de Next SIN headers CORS
     // y el browser lo reporta como "CORS" en vez del 500 real.
     console.error('[precios]', err)
-    const detalle = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
-    return withCors(NextResponse.json({ error: 'Error interno', detalle }, { status: 500 }))
+    return withCors(NextResponse.json({ error: 'Error interno' }, { status: 500 }))
   }
 }

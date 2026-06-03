@@ -130,8 +130,6 @@ export async function POST(req: NextRequest) {
     return withCors(NextResponse.json({ ok: true, ingested }))
   } catch (err) {
     console.error('[sync/ingest]', err)
-    // Temporal: exponer el detalle para diagnosticar el 500 de sync.
-    const detalle = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
-    return withCors(NextResponse.json({ error: 'Error interno', detalle, ingested }, { status: 500 }))
+    return withCors(NextResponse.json({ error: 'Error interno', ingested }, { status: 500 }))
   }
 }
