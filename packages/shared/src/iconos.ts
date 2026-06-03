@@ -91,6 +91,85 @@ export const ICONOS_TIENDA: IconoTienda[] = [
   { name: 'Tag',           q: 'etiqueta precio oferta promo' },
   { name: 'Percent',       q: 'descuento oferta promo' },
   { name: 'Star',          q: 'destacado favorito estrella' },
+
+  // Bebidas (más)
+  { name: 'Citrus',        q: 'jugo naranja limon citrico exprimido' },
+  { name: 'Grape',         q: 'uva vino vinos vineria' },
+
+  // Frutas / verduras (más)
+  { name: 'Cherry',        q: 'fruta cereza verduleria' },
+  { name: 'Banana',        q: 'fruta banana verduleria' },
+  { name: 'Bean',          q: 'legumbre poroto lenteja dietetica' },
+  { name: 'Leaf',          q: 'yerba te dietetica natural hierba' },
+  { name: 'Sprout',        q: 'semilla planta vivero germen dietetica' },
+
+  // Comida (más)
+  { name: 'Lollipop',      q: 'chupetin golosina caramelo dulce' },
+  { name: 'EggFried',      q: 'huevo frito rotiseria comida' },
+  { name: 'CookingPot',    q: 'rotiseria comida olla guiso vianda' },
+  { name: 'ChefHat',       q: 'rotiseria cocina comida chef' },
+
+  // Frío / congelados
+  { name: 'Refrigerator',  q: 'heladera frio refrigerado lacteos' },
+  { name: 'Snowflake',     q: 'congelado helado frio hielo' },
+
+  // Limpieza (más)
+  { name: 'Trash2',        q: 'bolsa residuo basura limpieza' },
+  { name: 'Droplets',      q: 'lavandina detergente limpieza liquido' },
+  { name: 'Brush',         q: 'cepillo limpieza escoba' },
+  { name: 'PaintbrushVertical', q: 'pincel ferreteria pintura' },
+
+  // Higiene / textil
+  { name: 'Shirt',         q: 'ropa remera textil indumentaria' },
+  { name: 'Bath',          q: 'bano higiene jabon perfumeria' },
+  { name: 'ShowerHead',    q: 'ducha higiene shampoo perfumeria' },
+
+  // Ferretería / electricidad
+  { name: 'Hammer',        q: 'ferreteria martillo herramienta' },
+  { name: 'Wrench',        q: 'ferreteria llave herramienta' },
+  { name: 'Plug',          q: 'enchufe electricidad ferreteria' },
+  { name: 'Lightbulb',     q: 'lampara luz foco electricidad' },
+  { name: 'Battery',       q: 'pila bateria energia' },
+
+  // Juguetería / juegos
+  { name: 'ToyBrick',      q: 'juguete bloque ladrillo nene' },
+  { name: 'Dices',         q: 'juego dado ludo' },
+  { name: 'Gamepad2',      q: 'juego joystick consola videojuego' },
+  { name: 'Puzzle',        q: 'rompecabezas juego puzzle' },
+
+  // Librería / escolar
+  { name: 'Pen',           q: 'lapicera birome libreria' },
+  { name: 'Ruler',         q: 'regla libreria escolar' },
+  { name: 'Eraser',        q: 'goma borrar libreria escolar' },
+  { name: 'Paperclip',     q: 'clip libreria oficina' },
+  { name: 'BookText',      q: 'cuaderno libro libreria escolar' },
+  { name: 'Calculator',    q: 'calculadora libreria oficina' },
+  { name: 'Backpack',      q: 'mochila escolar libreria' },
+
+  // Bazar / hogar
+  { name: 'Lamp',          q: 'lampara velador hogar bazar' },
+
+  // Mascotas (más)
+  { name: 'Bird',          q: 'pajaro ave mascota alpiste' },
+  { name: 'Rabbit',        q: 'conejo mascota animal' },
+  { name: 'Turtle',        q: 'tortuga mascota animal' },
+
+  // Quiniela / suerte / varios
+  { name: 'Ticket',        q: 'quiniela loteria rifa entrada raspadita' },
+  { name: 'Clover',        q: 'suerte quiniela trebol' },
+  { name: 'Trophy',        q: 'premio trofeo torneo' },
+  { name: 'PartyPopper',   q: 'cumpleanos fiesta cotillon globo' },
+
+  // Pagos / caja
+  { name: 'Banknote',      q: 'efectivo billete plata pago' },
+  { name: 'Coins',         q: 'monedas cambio plata' },
+  { name: 'Wallet',        q: 'billetera pago plata' },
+  { name: 'QrCode',        q: 'qr mercadopago pago billetera' },
+  { name: 'Receipt',       q: 'ticket comprobante factura recibo' },
+
+  // Florería / vivero
+  { name: 'Flower2',       q: 'flor ramo floreria' },
+  { name: 'TreePalm',      q: 'planta vivero verde' },
 ]
 
 /** Normaliza para buscar: minúsculas, sin acentos. */

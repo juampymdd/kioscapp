@@ -77,7 +77,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         venta_id: ventaId,
         producto_id: item.producto.id,
         descripcion: item.producto.descripcion,
-        precio_unit_centavos: item.producto.precio_centavos,
+        precio_unit_centavos: item.precio_unit_centavos,
         categoria: item.producto.categoria,
         cantidad: item.cantidad,
         subtotal_centavos: item.subtotal_centavos,
@@ -96,7 +96,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         items: items.map(i => ({
           descripcion:          i.producto.descripcion,
           cantidad:             i.cantidad,
-          precio_unit_centavos: i.producto.precio_centavos,
+          precio_unit_centavos: i.precio_unit_centavos,
           categoria:            i.producto.categoria,
           subtotal_centavos:    i.subtotal_centavos,
           descuento_centavos:   i.descuento_centavos,

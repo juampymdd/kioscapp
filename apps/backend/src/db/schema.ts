@@ -19,6 +19,7 @@ export const productos = pgTable('productos', {
   categoria:       text('categoria').notNull(),
   precio_centavos: integer('precio_centavos').notNull(),
   fraccionable:    boolean('fraccionable').notNull().default(false),
+  precio_variable: boolean('precio_variable').notNull().default(false),
   unidad_medida:   text('unidad_medida').notNull().default('unidad'),
   activo:          boolean('activo').notNull().default(true),
 }, t => [

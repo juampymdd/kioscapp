@@ -23,6 +23,7 @@ function mapProducto(r: Row): Produto {
     categoria: r.categoria as Produto['categoria'],
     precio_centavos: r.precio_centavos as number,
     fraccionable: bool(r.fraccionable),
+    precio_variable: bool(r.precio_variable),
     unidad_medida: r.unidad_medida as string,
     activo: bool(r.activo),
     created_at: r.created_at as string,
@@ -228,14 +229,15 @@ export class SqliteDataStore implements DataStore {
     await this.db.execute(
       `INSERT INTO productos
          (id, codigo_barras, descripcion, categoria, precio_centavos, fraccionable,
-          unidad_medida, activo, created_at, updated_at, local_id, sync_status, deleted_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+          precio_variable, unidad_medida, activo, created_at, updated_at, local_id, sync_status, deleted_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        ON CONFLICT(id) DO UPDATE SET
          codigo_barras=excluded.codigo_barras,
          descripcion=excluded.descripcion,
          categoria=excluded.categoria,
          precio_centavos=excluded.precio_centavos,
          fraccionable=excluded.fraccionable,
+         precio_variable=excluded.precio_variable,
          unidad_medida=excluded.unidad_medida,
          activo=excluded.activo,
          updated_at=excluded.updated_at,
@@ -244,6 +246,7 @@ export class SqliteDataStore implements DataStore {
       [
         p.id, p.codigo_barras, p.descripcion, p.categoria,
         p.precio_centavos, p.fraccionable ? 1 : 0,
+        p.precio_variable ? 1 : 0,
         p.unidad_medida, p.activo ? 1 : 0,
         p.created_at, p.updated_at, p.local_id, p.sync_status, p.deleted_at,
       ],

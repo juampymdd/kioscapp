@@ -192,4 +192,10 @@ export const migrations = [
       );
     `,
   },
+  {
+    description: 'productos: precio variable (recargas) — Fase 4',
+    sql: `
+      ALTER TABLE productos ADD COLUMN precio_variable INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ]

@@ -6,6 +6,7 @@ import { useCartStore } from '../store/cartStore'
 import { formatCentavos } from '../lib/money'
 import Skeleton from './Skeleton'
 import CategoriaIcon from './CategoriaIcon'
+import MontoVariableModal from './MontoVariableModal'
 
 interface Props {
   filtro: string
@@ -16,7 +17,13 @@ export default function ProductGrid({ filtro }: Props) {
   const [cats, setCats]           = useState<Categoria[]>([])
   const [cargando, setCargando]   = useState(true)
   const [categoria, setCategoria] = useState<CategoriaProducto | null>(null)
+  const [pendiente, setPendiente] = useState<Producto | null>(null)
   const addItem = useCartStore(s => s.addItem)
+
+  function agregar(p: Producto) {
+    if (p.precio_variable) setPendiente(p)
+    else addItem(p)
+  }
 
   useEffect(() => {
     getDataStore().getCategorias().then(setCats)
@@ -91,8 +98,8 @@ export default function ProductGrid({ filtro }: Props) {
           return (
             <button
               key={p.id}
-              onClick={() => addItem(p)}
-              aria-label={`Agregar ${p.descripcion}, ${formatCentavos(p.precio_centavos)}`}
+              onClick={() => agregar(p)}
+              aria-label={p.precio_variable ? `Agregar ${p.descripcion}, monto a definir` : `Agregar ${p.descripcion}, ${formatCentavos(p.precio_centavos)}`}
               className="group flex flex-col bg-slate-800 hover:bg-slate-700 border border-slate-700
                          hover:border-blue-500 rounded-xl p-3 text-left min-h-[7.5rem]
                          transition-colors cursor-pointer
@@ -106,9 +113,13 @@ export default function ProductGrid({ filtro }: Props) {
                 {p.descripcion}
               </div>
               <div className="mt-auto pt-2 border-t border-slate-700/70 group-hover:border-slate-600 transition-colors">
-                <span className="text-blue-400 font-bold text-lg tabular-nums tracking-tight">
-                  {formatCentavos(p.precio_centavos)}
-                </span>
+                {p.precio_variable ? (
+                  <span className="text-slate-400 font-medium text-sm">A definir</span>
+                ) : (
+                  <span className="text-blue-400 font-bold text-lg tabular-nums tracking-tight">
+                    {formatCentavos(p.precio_centavos)}
+                  </span>
+                )}
               </div>
             </button>
           )
@@ -119,6 +130,14 @@ export default function ProductGrid({ filtro }: Props) {
           </div>
         )}
       </div>
+
+      {pendiente && (
+        <MontoVariableModal
+          producto={pendiente}
+          onConfirm={c => { addItem(pendiente, 1, c); setPendiente(null) }}
+          onClose={() => setPendiente(null)}
+        />
+      )}
     </div>
   )
 }

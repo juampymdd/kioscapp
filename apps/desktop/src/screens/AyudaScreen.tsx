@@ -120,6 +120,7 @@ const SECCIONES: Seccion[] = [
         <Lista>
           <li>Tocá <B>Nuevo</B> para agregar uno: nombre, código de barras (opcional), categoría y precio.</li>
           <li>Marcá <B>Fraccionable (kg)</B> si se vende por peso (por ejemplo, caramelos sueltos).</li>
+          <li>Marcá <B>Precio variable</B> si el monto se decide al vender, como las recargas de SUBE o celular. Al cobrarlo, la app te pide cuánto.</li>
           <li>Para cambiar algo, tocá el producto en la lista y editá.</li>
           <li>Si dejás de vender un producto, podés <B>desactivarlo</B>: deja de aparecer al vender pero no se borra.</li>
         </Lista>

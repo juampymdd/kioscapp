@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { Scan } from 'lucide-react'
+import type { Producto } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { useCartStore } from '../store/cartStore'
+import MontoVariableModal from './MontoVariableModal'
 
 interface Props {
   onFiltroChange: (filtro: string) => void
@@ -12,6 +14,7 @@ export default function SearchInput({ onFiltroChange }: Props) {
   const [value, setValue] = useState('')
   const [searching, setSearching] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [pendiente, setPendiente] = useState<Producto | null>(null)
   const addItem = useCartStore(s => s.addItem)
 
   function handleChange(v: string) {
@@ -27,7 +30,8 @@ export default function SearchInput({ onFiltroChange }: Props) {
     try {
       const producto = await getDataStore().getProductoPorBarcode(value.trim())
       if (producto) {
-        addItem(producto)
+        if (producto.precio_variable) setPendiente(producto)
+        else addItem(producto)
         setValue('')
         onFiltroChange('')
       } else {
@@ -77,6 +81,14 @@ export default function SearchInput({ onFiltroChange }: Props) {
       </div>
       {notFound && (
         <p className="text-red-400 text-xs mt-1 ml-1">Código no encontrado</p>
+      )}
+
+      {pendiente && (
+        <MontoVariableModal
+          producto={pendiente}
+          onConfirm={c => { addItem(pendiente, 1, c); setPendiente(null) }}
+          onClose={() => setPendiente(null)}
+        />
       )}
     </div>
   )

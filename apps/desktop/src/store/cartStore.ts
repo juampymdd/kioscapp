@@ -5,6 +5,10 @@ import { resolverDescuento, type OrigenDescuento } from '@kioscapp/shared'
 export interface CartItem {
   producto: Producto
   cantidad: number
+  /** Precio unitario efectivo: el override (precio variable) o el del producto. */
+  precio_unit_centavos: number
+  /** Monto fijado al vender para precio variable (centavos). null = usar producto. */
+  precioOverride_centavos: number | null
   subtotal_centavos: number
   /** Descuento manual fijado por el cajero (centavos). null = sin override manual. */
   descuentoManual_centavos: number | null
@@ -22,7 +26,7 @@ interface CartStore {
   items: CartItem[]
   descuento_centavos: number          // descuento global manual de la venta
   catalogo: Descuento[]               // catálogo bajado del central
-  addItem: (producto: Producto, cantidad?: number) => void
+  addItem: (producto: Producto, cantidad?: number, precioUnit?: number) => void
   removeItem: (productoId: string) => void
   updateCantidad: (productoId: string, cantidad: number) => void
   setDescuentoManualItem: (productoId: string, centavos: number | null, detalle?: string | null) => void
@@ -39,7 +43,8 @@ function recalcItem(item: CartItem, catalogo: Descuento[]): CartItem {
   // Redondear a 3 decimales evita el drift de float del stepper (0.1 + 0.1 + ...).
   const cantidad = Math.round(item.cantidad * 1000) / 1000
   item = { ...item, cantidad }
-  const subtotal_centavos = Math.floor(cantidad * item.producto.precio_centavos)
+  const precio_unit_centavos = item.precioOverride_centavos ?? item.producto.precio_centavos
+  const subtotal_centavos = Math.floor(cantidad * precio_unit_centavos)
   const { centavos, origen, detalle } = resolverDescuento(
     { producto_id: item.producto.id, categoria: item.producto.categoria, subtotal_centavos },
     item.descuentoManual_centavos,
@@ -47,7 +52,7 @@ function recalcItem(item: CartItem, catalogo: Descuento[]): CartItem {
   )
   // El detalle del manual lo aporta el carrito (resolver no conoce el modo %/$).
   const descuento_detalle = origen === 'manual' ? item.descuentoManual_detalle : detalle
-  return { ...item, subtotal_centavos, descuento_centavos: centavos, descuento_origen: origen, descuento_detalle }
+  return { ...item, precio_unit_centavos, subtotal_centavos, descuento_centavos: centavos, descuento_origen: origen, descuento_detalle }
 }
 
 /** ¿El ítem tiene una promo de catálogo aplicada? (manual queda bloqueado) */
@@ -60,17 +65,33 @@ export const useCartStore = create<CartStore>((set, get) => ({
   descuento_centavos: 0,
   catalogo: [],
 
-  addItem(producto, cantidad = 1) {
+  addItem(producto, cantidad = 1, precioUnit) {
     set(state => {
       const existing = state.items.find(i => i.producto.id === producto.id)
+      const base = {
+        producto,
+        precio_unit_centavos: 0,
+        precioOverride_centavos: precioUnit ?? null,
+        subtotal_centavos: 0,
+        descuentoManual_centavos: null, descuentoManual_detalle: null,
+        descuento_centavos: 0, descuento_origen: null, descuento_detalle: null,
+      }
+
+      // Precio variable (monto tipeado al vender): línea única, cantidad 1.
+      // Re-agregar reemplaza el monto en vez de acumular cantidades.
+      if (precioUnit != null) {
+        const linea = recalcItem({ ...base, cantidad: 1 }, state.catalogo)
+        const items = existing
+          ? state.items.map(i => i.producto.id === producto.id ? linea : i)
+          : [...state.items, linea]
+        return { items }
+      }
+
       const items = existing
         ? state.items.map(i => i.producto.id === producto.id
             ? recalcItem({ ...i, cantidad: i.cantidad + cantidad }, state.catalogo)
             : i)
-        : [...state.items, recalcItem(
-            { producto, cantidad, subtotal_centavos: 0, descuentoManual_centavos: null, descuentoManual_detalle: null, descuento_centavos: 0, descuento_origen: null, descuento_detalle: null },
-            state.catalogo,
-          )]
+        : [...state.items, recalcItem({ ...base, cantidad }, state.catalogo)]
       return { items }
     })
   },

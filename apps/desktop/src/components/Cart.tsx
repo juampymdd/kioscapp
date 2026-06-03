@@ -55,7 +55,7 @@ function CartRow({ item }: { item: CartItem }) {
       {/* Línea 2: precio unit · stepper · subtotal */}
       <div className="flex items-center gap-2">
         <span className="text-slate-400 text-xs tabular-nums">
-          {formatCentavos(item.producto.precio_centavos)} c/u
+          {formatCentavos(item.precio_unit_centavos)} c/u
         </span>
 
         <div className="flex items-center gap-1 ml-auto shrink-0">

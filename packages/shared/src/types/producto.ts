@@ -21,6 +21,12 @@ export interface Producto extends SyncFields {
   precio_centavos: number
   /** true para productos a granel (golosinas, queso, etc.). */
   fraccionable: boolean
+  /**
+   * true = el precio se ingresa al vender (recargas SUBE, celular, etc.).
+   * En ese caso precio_centavos es solo una sugerencia/0; el monto real lo
+   * tipea el cajero en el momento.
+   */
+  precio_variable: boolean
   /** 'unidad' | 'kg' | 'g' | 'l' | 'ml' */
   unidad_medida: string
   activo: boolean

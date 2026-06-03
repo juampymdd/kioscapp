@@ -3,7 +3,6 @@ import { RefreshCw } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
 import { getDataStore } from '../store/dataStore'
 import { syncService } from '../services/syncService'
-import BrandMark from '../components/BrandMark'
 import type { AnchoPapel } from '../lib/ticket'
 
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? ''
@@ -74,7 +73,7 @@ export default function SetupScreen({ onComplete }: Props) {
       <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 p-8">
 
         <div className="flex flex-col items-center mb-8">
-          <BrandMark size={56} className="mb-3" />
+          <img src="/kioscapp-logo.svg" alt="KioscApp" className="h-9 mb-4" draggable={false} />
           <h1 className="text-white text-2xl font-bold">Configuración inicial</h1>
           <p className="text-slate-400 text-sm mt-1 text-center">
             Ingresá los datos que te proporcionó el administrador

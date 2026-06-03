@@ -17,6 +17,7 @@ function emptyProducto(): Producto {
     categoria: 'varios',
     precio_centavos: 0,
     fraccionable: false,
+    precio_variable: false,
     unidad_medida: 'unidad',
     activo: true,
     created_at: ts,
@@ -247,7 +248,9 @@ export default function ProductosScreen() {
             </div>
 
             <div>
-              <label className="text-slate-400 text-xs block mb-1">Precio ($)</label>
+              <label className="text-slate-400 text-xs block mb-1">
+                {editando.precio_variable ? 'Precio sugerido ($)' : 'Precio ($)'}
+              </label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -257,18 +260,23 @@ export default function ProductosScreen() {
                            text-white text-sm text-right font-mono
                            focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-              {precioStr && (
+              {editando.precio_variable ? (
+                <p className="text-blue-300 text-xs mt-1">
+                  El monto se ingresa al vender (recargas, SUBE, etc.).
+                </p>
+              ) : precioStr && (
                 <p className="text-slate-500 text-xs mt-1 text-right">
                   = {formatCentavos(parseCentavos(precioStr))}
                 </p>
               )}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editando.fraccionable}
+                  disabled={editando.precio_variable}
                   onChange={e => setEditando({
                     ...editando,
                     fraccionable: e.target.checked,
@@ -276,6 +284,18 @@ export default function ProductosScreen() {
                   })}
                 />
                 Fraccionable (kg)
+              </label>
+              <label className="flex items-center gap-2 text-slate-300 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editando.precio_variable}
+                  onChange={e => setEditando({
+                    ...editando,
+                    precio_variable: e.target.checked,
+                    fraccionable: e.target.checked ? false : editando.fraccionable,
+                  })}
+                />
+                Precio variable (se ingresa al vender)
               </label>
             </div>
           </div>

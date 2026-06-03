@@ -24,6 +24,7 @@ function producto(
     categoria,
     precio_centavos,
     fraccionable,
+    precio_variable: false,
     unidad_medida: fraccionable ? 'kg' : 'unidad',
     activo: true,
     created_at: ts,
