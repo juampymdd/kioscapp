@@ -132,25 +132,9 @@ async function pullCatalogo(since?: string): Promise<void> {
     const row = pr as any
     await store.upsertProveedor({ ...row, activo: row.activo === true || row.activo === 1, sync_status: 'synced' })
   }
-  // Stock se actualiza mediante upsert directo
-  for (const s of data.stock) {
-    const row = s as any
-    await (store as any).db.execute(
-      `INSERT INTO stock
-         (id, producto_id, cantidad, alerta_minimo, created_at, updated_at,
-          local_id, sync_status, deleted_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'synced',$8)
-       ON CONFLICT(id) DO UPDATE SET
-         cantidad=excluded.cantidad,
-         alerta_minimo=excluded.alerta_minimo,
-         updated_at=excluded.updated_at,
-         sync_status='synced'`,
-      [
-        row.id, row.producto_id, row.cantidad, row.alerta_minimo,
-        row.created_at, row.updated_at, row.local_id, row.deleted_at,
-      ],
-    )
-  }
+  // Stock: NO se baja del central. Cada caja es la fuente de verdad de su propio
+  // stock (lo descuenta al vender y lo ajusta en la pantalla Stock). El central solo
+  // lo recibe vía ingest para que la web lo monitoree por sucursal.
 
   localStorage.setItem('catalog_last_sync', data.generado_at)
 }

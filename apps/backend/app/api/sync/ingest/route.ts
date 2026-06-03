@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
-import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta, categorias } from '@/src/db/schema'
+import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta, categorias, stock } from '@/src/db/schema'
 import { optionsResponse, withCors } from '@/src/lib/cors'
 import { and, eq } from 'drizzle-orm'
 
@@ -12,6 +12,7 @@ type IngestPayload = {
   movimientos_caja?: (typeof movimientos_caja.$inferInsert)[]
   proveedores?: (typeof proveedores.$inferInsert)[]
   categorias?: (typeof categorias.$inferInsert)[]
+  stock?: (typeof stock.$inferInsert)[]
 }
 
 async function checkAuth(req: NextRequest, localId: string): Promise<boolean> {
@@ -86,6 +87,18 @@ export async function POST(req: NextRequest) {
         .values(body.proveedores.map(p => ({ ...p, sync_status: 'synced' as const })))
         .onConflictDoNothing()
       ingested.proveedores = body.proveedores.length
+    }
+
+    if (body.stock?.length) {
+      for (const s of body.stock) {
+        await db.insert(stock)
+          .values({ ...s, sync_status: 'synced' as const })
+          .onConflictDoUpdate({
+            target: stock.id,
+            set: { cantidad: s.cantidad, alerta_minimo: s.alerta_minimo, updated_at: s.updated_at, deleted_at: s.deleted_at ?? null },
+          })
+      }
+      ingested.stock = body.stock.length
     }
 
     if (body.categorias?.length) {
