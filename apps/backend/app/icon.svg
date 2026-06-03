@@ -1,14 +1,14 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="14" fill="#2563eb"/>
-  <rect x="34" y="10" width="8" height="10" rx="1.5" fill="#bfdbfe"/>
-  <rect x="15" y="16" width="21" height="14" rx="2.5" fill="#ffffff"/>
-  <rect x="18.5" y="19" width="14" height="8" rx="1.2" fill="#2563eb"/>
-  <rect x="12" y="29" width="40" height="21" rx="3" fill="#ffffff"/>
-  <rect x="16" y="34" width="3.5" height="3.5" rx="1" fill="#2563eb"/>
-  <rect x="21.5" y="34" width="3.5" height="3.5" rx="1" fill="#2563eb"/>
-  <rect x="27" y="34" width="3.5" height="3.5" rx="1" fill="#2563eb"/>
-  <rect x="16" y="39.5" width="3.5" height="3.5" rx="1" fill="#2563eb"/>
-  <rect x="21.5" y="39.5" width="3.5" height="3.5" rx="1" fill="#2563eb"/>
-  <rect x="27" y="39.5" width="3.5" height="3.5" rx="1" fill="#2563eb"/>
-  <rect x="36.5" y="34" width="11" height="9" rx="1.5" fill="#2563eb"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="83.76 -24.24 433.68 433.68" width="512.0" height="512.0" role="img" aria-label="KioscApp">
+<path d="M122.9 81.9 L389.1 81.9 L389.1 327.7 L366.9 368.6 L344.7 327.7 L322.6 368.6 L300.4 327.7 L278.2 368.6 L256.0 327.7 L233.8 368.6 L211.6 327.7 L189.4 368.6 L167.3 327.7 L145.1 368.6 L122.9 327.7 Z" fill="#F7F1E6" stroke="#16243F" stroke-width="6" stroke-linejoin="round"/>
+<path d="M122.9 81.9 L389.1 81.9 L389.1 126.3 L122.9 126.3 Z" fill="#E14B3C"/>
+<path d="M122.9 81.9 L389.1 81.9" stroke="#16243F" stroke-width="6" stroke-linecap="round"/>
+<path d="M13.78 109.36 L41.98 109.36 L41.98 69.45 L82.62 109.36 L115.36 109.36 L62.70 57.56 L120.77 0.00 L85.48 0.00 L41.98 43.08 L41.98 0.00 L13.78 0.00 L13.78 109.36 Z" fill="#16243F" transform="translate(195.61,266.68) scale(1,-1)"/>
+<rect x="187.7" y="286" width="136.5" height="10.2" rx="5" fill="#C9BFA8"/>
+<rect x="208.2" y="306" width="95.6" height="10.2" rx="5" fill="#C9BFA8"/>
+<circle cx="361.8" cy="75.1" r="37.5" fill="#57A6E6"/>
+<circle cx="409.6" cy="58.0" r="44.4" fill="#57A6E6"/>
+<circle cx="450.6" cy="78.5" r="30.7" fill="#57A6E6"/>
+<rect x="355.0" y="75.1" width="102.4" height="30.7" rx="14" fill="#57A6E6"/>
+<polygon points="389.1,75.1 423.2,75.1 406.2,44.4" fill="#FFFFFF"/>
+<rect x="399.4" y="71.7" width="13.7" height="27.3" fill="#FFFFFF"/>
 </svg>
