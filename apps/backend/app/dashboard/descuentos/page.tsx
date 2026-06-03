@@ -118,7 +118,16 @@ export default function DescuentosPage() {
           <th className="py-2">Ámbito</th><th>Objetivo</th><th>Valor</th><th>Estado</th><th></th>
         </tr></thead>
         <tbody>
-          {items.map(d => (
+          {cargando && Array.from({ length: 5 }).map((_, i) => (
+            <tr key={`sk-${i}`} className="border-b border-slate-800">
+              <td className="py-2.5"><Skeleton className="h-4 w-32" /></td>
+              <td><Skeleton className="h-4 w-40" /></td>
+              <td><Skeleton className="h-4 w-12" /></td>
+              <td><Skeleton className="h-4 w-16" /></td>
+              <td className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></td>
+            </tr>
+          ))}
+          {!cargando && items.map(d => (
             <tr key={d.id} className="border-b border-slate-800">
               <td className="py-2">{ambitoTxt(d)}</td>
               <td>{objetivoTxt(d)}</td>
@@ -133,7 +142,7 @@ export default function DescuentosPage() {
               </td>
             </tr>
           ))}
-          {items.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-500">Sin descuentos cargados</td></tr>}
+          {!cargando && items.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-500">Sin descuentos cargados</td></tr>}
         </tbody>
       </table>
     </div>

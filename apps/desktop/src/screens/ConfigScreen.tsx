@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { getDataStore } from '../store/dataStore'
 import { SqliteDataStore } from '../store/SqliteDataStore'
 import { syncService } from '../services/syncService'
+import type { AnchoPapel } from '../lib/ticket'
 
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? ''
 
@@ -20,6 +21,7 @@ export default function ConfigScreen({ onClose }: Props) {
   const [nombreComercio, setNombreComercio] = useState('')
   const [impresoras,     setImpresoras]     = useState<string[]>([])
   const [impresora,      setImpresora]      = useState('')
+  const [anchoPapel,     setAnchoPapel]     = useState<AnchoPapel>('58')
   const [cargandoPrint,  setCargandoPrint]  = useState(false)
   const [guardando,      setGuardando]      = useState(false)
   const [error,          setError]          = useState<string | null>(null)
@@ -42,6 +44,7 @@ export default function ConfigScreen({ onClose }: Props) {
     setSyncSecret((await store.getConfig('sync_secret')) ?? '')
     setNombreComercio((await store.getConfig('nombre_comercio')) ?? '')
     setImpresora((await store.getConfig('impresora')) ?? '')
+    setAnchoPapel((await store.getConfig('ancho_papel')) === '80' ? '80' : '58')
   }
 
   async function cargarImpresoras() {
@@ -66,6 +69,7 @@ export default function ConfigScreen({ onClose }: Props) {
       await store.setConfig('sync_secret',     syncSecret.trim())
       if (nombreComercio.trim()) await store.setConfig('nombre_comercio', nombreComercio.trim())
       if (impresora)             await store.setConfig('impresora',        impresora)
+      await store.setConfig('ancho_papel', anchoPapel)
 
       await syncService.restart()
       setSaved(true)
@@ -149,6 +153,26 @@ export default function ConfigScreen({ onClose }: Props) {
                 {cargandoPrint ? 'Buscando…' : 'No se encontraron impresoras.'}
               </p>
             )}
+          </div>
+
+          <div>
+            <label className="text-slate-400 text-xs block mb-1.5">Ancho del papel</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([['58', '58 mm', 'Kiosco / chico'], ['80', '80 mm', 'Super / grande']] as const).map(([val, titulo, sub]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setAnchoPapel(val)}
+                  className={`rounded-lg border px-3 py-2.5 text-left cursor-pointer transition-colors
+                              ${anchoPapel === val
+                                ? 'border-blue-500 bg-blue-600/15 text-white'
+                                : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'}`}
+                >
+                  <span className="block text-sm font-semibold">{titulo}</span>
+                  <span className="block text-xs text-slate-400">{sub}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {error && (

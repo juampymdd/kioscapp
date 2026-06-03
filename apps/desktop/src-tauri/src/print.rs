@@ -1,7 +1,5 @@
 use serde::Deserialize;
 
-const WIDTH: usize = 32;
-
 #[derive(Deserialize)]
 #[allow(dead_code)]
 pub struct ItemTicket {
@@ -70,17 +68,18 @@ fn pesos(centavos: i64) -> String {
     }
 }
 
-fn right_align(left: &str, right: &str) -> String {
-    let spaces = WIDTH.saturating_sub(left.len() + right.len());
+fn right_align(left: &str, right: &str, width: usize) -> String {
+    let spaces = width.saturating_sub(left.len() + right.len());
     format!("{}{}{}", left, " ".repeat(spaces.max(1)), right)
 }
 
-fn center(s: &str) -> String {
-    let pad = WIDTH.saturating_sub(s.len()) / 2;
+fn center(s: &str, width: usize) -> String {
+    let pad = width.saturating_sub(s.len()) / 2;
     format!("{}{}", " ".repeat(pad), s)
 }
 
-pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
+/// `width` = columnas según ancho de papel: 32 (58 mm) o 48 (80 mm).
+pub fn build_escpos(datos: &DatosTicket, width: usize) -> Vec<u8> {
     let mut b: Vec<u8> = Vec::new();
 
     // ESC @ — init
@@ -98,7 +97,7 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
 
     // Left alignment
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
-    b.extend_from_slice("=".repeat(WIDTH).as_bytes());
+    b.extend_from_slice("=".repeat(width).as_bytes());
     b.push(0x0A);
 
     // Agrupado por categoria (orden fijo): titulo en negrita, luego cada item en
@@ -116,7 +115,7 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
 
         for item in items {
             let desc = ascii(&item.descripcion);
-            let desc = if desc.len() > WIDTH { &desc[..WIDTH] } else { &desc };
+            let desc = if desc.len() > width { &desc[..width] } else { &desc };
             b.extend_from_slice(desc.as_bytes());
             b.push(0x0A);
 
@@ -126,7 +125,7 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
                 format!("{:.2}", item.cantidad)
             };
             let qty_line = format!("{} x {}", cant, pesos(item.precio_unit_centavos));
-            b.extend_from_slice(right_align(&qty_line, &pesos(item.subtotal_centavos)).as_bytes());
+            b.extend_from_slice(right_align(&qty_line, &pesos(item.subtotal_centavos), width).as_bytes());
             b.push(0x0A);
 
             if item.descuento_centavos > 0 {
@@ -136,24 +135,24 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
                     _ => format!("  {}", base),
                 };
                 b.extend_from_slice(
-                    right_align(&etiqueta, &format!("-{}", pesos(item.descuento_centavos))).as_bytes(),
+                    right_align(&etiqueta, &format!("-{}", pesos(item.descuento_centavos)), width).as_bytes(),
                 );
                 b.push(0x0A);
             }
         }
     }
 
-    b.extend_from_slice("-".repeat(WIDTH).as_bytes());
+    b.extend_from_slice("-".repeat(width).as_bytes());
     b.push(0x0A);
 
     if datos.descuento_centavos > 0 {
-        b.extend_from_slice(right_align("DESCUENTO:", &pesos(datos.descuento_centavos)).as_bytes());
+        b.extend_from_slice(right_align("DESCUENTO:", &pesos(datos.descuento_centavos), width).as_bytes());
         b.push(0x0A);
     }
 
     // Total: negrita + doble alto (GS ! 0x01 — alto doble, ancho normal para no romper las 32 cols)
     b.extend_from_slice(&[0x1B, 0x45, 0x01, 0x1D, 0x21, 0x01]);
-    b.extend_from_slice(right_align("TOTAL:", &pesos(datos.total_centavos)).as_bytes());
+    b.extend_from_slice(right_align("TOTAL:", &pesos(datos.total_centavos), width).as_bytes());
     b.push(0x0A);
     b.extend_from_slice(&[0x1D, 0x21, 0x00, 0x1B, 0x45, 0x00]);
 
@@ -164,26 +163,26 @@ pub fn build_escpos(datos: &DatosTicket) -> Vec<u8> {
         "qr_mercado_pago" => "QR / Mercado Pago",
         other             => other,
     };
-    b.extend_from_slice(right_align("MEDIO DE PAGO:", medio_label).as_bytes());
+    b.extend_from_slice(right_align("MEDIO DE PAGO:", medio_label, width).as_bytes());
     b.push(0x0A);
 
     if datos.medio_pago == "efectivo" {
         if datos.monto_recibido_centavos > 0 {
-            b.extend_from_slice(right_align("RECIBIDO:", &pesos(datos.monto_recibido_centavos)).as_bytes());
+            b.extend_from_slice(right_align("RECIBIDO:", &pesos(datos.monto_recibido_centavos), width).as_bytes());
             b.push(0x0A);
         }
         if datos.vuelto_centavos > 0 {
-            b.extend_from_slice(right_align("VUELTO:", &pesos(datos.vuelto_centavos)).as_bytes());
+            b.extend_from_slice(right_align("VUELTO:", &pesos(datos.vuelto_centavos), width).as_bytes());
             b.push(0x0A);
         }
     }
 
-    b.extend_from_slice("=".repeat(WIDTH).as_bytes());
+    b.extend_from_slice("=".repeat(width).as_bytes());
     b.push(0x0A);
 
     // Center: gracias
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    b.extend_from_slice(center("Gracias por su compra!").as_bytes());
+    b.extend_from_slice(center("Gracias por su compra!", width).as_bytes());
     b.push(0x0A);
 
     // 4 line feeds + partial cut

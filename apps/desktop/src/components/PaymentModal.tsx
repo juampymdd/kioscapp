@@ -3,7 +3,7 @@ import { X, Banknote, CreditCard, QrCode } from 'lucide-react'
 import MoneyInput from './MoneyInput'
 import TicketModal from './TicketModal'
 import type { MedioPago, Venta, VentaItem } from '@kioscapp/shared'
-import type { DatosTicket } from '../lib/ticket'
+import type { DatosTicket, AnchoPapel } from '../lib/ticket'
 import { useCartStore } from '../store/cartStore'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
@@ -33,9 +33,11 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
   // Ticket step
   const [ticketDatos, setTicketDatos] = useState<DatosTicket | null>(null)
   const [impresora, setImpresora]     = useState<string | null>(null)
+  const [anchoPapel, setAnchoPapel]   = useState<AnchoPapel>('58')
 
   useEffect(() => {
     getDataStore().getConfig('impresora').then(v => setImpresora(v))
+    getDataStore().getConfig('ancho_papel').then(v => setAnchoPapel(v === '80' ? '80' : '58'))
     // getConfig may return null if not configured
   }, [])
 
@@ -144,6 +146,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
       <TicketModal
         datos={ticketDatos}
         impresora={impresora}
+        ancho={anchoPapel}
         onDone={onSuccess}
       />
     )

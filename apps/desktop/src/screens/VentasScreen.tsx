@@ -6,7 +6,7 @@ import { formatCentavos } from '../lib/money'
 import TicketModal from '../components/TicketModal'
 import ScreenHeader from '../components/ScreenHeader'
 import Skeleton from '../components/Skeleton'
-import type { DatosTicket } from '../lib/ticket'
+import type { DatosTicket, AnchoPapel } from '../lib/ticket'
 
 const PAGE_SIZE = 20
 
@@ -77,11 +77,13 @@ export default function VentasScreen() {
   // Reimpresión
   const [impresora,      setImpresora]      = useState<string | null>(null)
   const [nombreComercio, setNombreComercio] = useState('KioscApp')
+  const [anchoPapel,     setAnchoPapel]     = useState<AnchoPapel>('58')
   const [ticketDatos,    setTicketDatos]    = useState<DatosTicket | null>(null)
 
   useEffect(() => {
     getDataStore().getConfig('impresora').then(setImpresora)
     getDataStore().getConfig('nombre_comercio').then(v => v && setNombreComercio(v))
+    getDataStore().getConfig('ancho_papel').then(v => setAnchoPapel(v === '80' ? '80' : '58'))
   }, [])
 
   async function reimprimir(v: Venta) {
@@ -385,6 +387,7 @@ export default function VentasScreen() {
         <TicketModal
           datos={ticketDatos}
           impresora={impresora}
+          ancho={anchoPapel}
           onDone={() => setTicketDatos(null)}
         />
       )}

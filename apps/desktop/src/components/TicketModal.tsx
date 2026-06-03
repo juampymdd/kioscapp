@@ -1,28 +1,30 @@
 import { useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { Printer, X, CheckCircle } from 'lucide-react'
-import type { DatosTicket } from '../lib/ticket'
-import { buildLineas } from '../lib/ticket'
+import type { DatosTicket, AnchoPapel } from '../lib/ticket'
+import { buildLineas, colsPorAncho } from '../lib/ticket'
 
 interface Props {
   datos: DatosTicket
   impresora: string | null
+  ancho?: AnchoPapel
   onDone: () => void
 }
 
-export default function TicketModal({ datos, impresora, onDone }: Props) {
+export default function TicketModal({ datos, impresora, ancho = '58', onDone }: Props) {
   const [imprimiendo, setImprimiendo] = useState(false)
   const [error, setError]             = useState<string | null>(null)
   const [impreso, setImpreso]         = useState(false)
 
-  const lineas = buildLineas(datos)
+  const cols = colsPorAncho(ancho)
+  const lineas = buildLineas(datos, ancho)
 
   async function imprimir() {
     if (!impresora) return
     setImprimiendo(true)
     setError(null)
     try {
-      await invoke('imprimir_ticket', { impresora, datos })
+      await invoke('imprimir_ticket', { impresora, datos, ancho })
       setImpreso(true)
       // Auto-close after 1.5s on success
       setTimeout(onDone, 1500)
@@ -48,12 +50,12 @@ export default function TicketModal({ datos, impresora, onDone }: Props) {
         {/* Ticket preview */}
         <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start">
           <div
-            className="bg-white text-black font-mono text-[11px] leading-5 px-4 py-5
-                       shadow-xl w-64 shrink-0 select-none"
+            className={`bg-white text-black font-mono text-[11px] leading-5 px-4 py-5
+                       shadow-xl shrink-0 select-none ${ancho === '80' ? 'w-80' : 'w-64'}`}
           >
             {lineas.map((l, i) => {
               if (l.tipo === 'sep') {
-                return <div key={i} className="whitespace-pre text-gray-400">{l.char.repeat(32)}</div>
+                return <div key={i} className="whitespace-pre text-gray-400">{l.char.repeat(cols)}</div>
               }
               if (l.grande) {
                 // Fuente grande: el padding monospace de 32 cols no entra en w-64.

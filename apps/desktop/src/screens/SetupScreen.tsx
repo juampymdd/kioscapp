@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { getDataStore } from '../store/dataStore'
 import { syncService } from '../services/syncService'
 import BrandMark from '../components/BrandMark'
+import type { AnchoPapel } from '../lib/ticket'
 
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? ''
 
@@ -17,6 +18,7 @@ export default function SetupScreen({ onComplete }: Props) {
   const [nombreComercio,  setNombreComercio]   = useState('')
   const [impresoras,      setImpresoras]       = useState<string[]>([])
   const [impresora,       setImpresora]        = useState('')
+  const [anchoPapel,      setAnchoPapel]        = useState<AnchoPapel>('58')
   const [cargandoPrint,   setCargandoPrint]    = useState(false)
   const [guardando,       setGuardando]        = useState(false)
   const [error,           setError]            = useState<string | null>(null)
@@ -57,6 +59,7 @@ export default function SetupScreen({ onComplete }: Props) {
       if (impresora) {
         await store.setConfig('impresora', impresora)
       }
+      await store.setConfig('ancho_papel', anchoPapel)
       await syncService.restart()
       onComplete()
     } catch (err) {
@@ -154,6 +157,26 @@ export default function SetupScreen({ onComplete }: Props) {
                 {cargandoPrint ? 'Buscando impresoras…' : 'No se encontraron impresoras. Podés configurarla después.'}
               </p>
             )}
+          </div>
+
+          <div>
+            <label className="text-slate-400 text-xs block mb-1.5">Ancho del papel</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([['58', '58 mm', 'Kiosco / chico'], ['80', '80 mm', 'Super / grande']] as const).map(([val, titulo, sub]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setAnchoPapel(val)}
+                  className={`rounded-lg border px-3 py-2.5 text-left cursor-pointer transition-colors
+                              ${anchoPapel === val
+                                ? 'border-blue-500 bg-blue-600/15 text-white'
+                                : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'}`}
+                >
+                  <span className="block text-sm font-semibold">{titulo}</span>
+                  <span className="block text-xs text-slate-400">{sub}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {error && (

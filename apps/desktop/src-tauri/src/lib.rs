@@ -7,8 +7,10 @@ fn listar_impresoras() -> Vec<String> {
 }
 
 #[tauri::command]
-fn imprimir_ticket(impresora: String, datos: DatosTicket) -> Result<(), String> {
-    let bytes = build_escpos(&datos);
+fn imprimir_ticket(impresora: String, datos: DatosTicket, ancho: Option<String>) -> Result<(), String> {
+    // 58 mm = 32 cols (default), 80 mm = 48 cols
+    let width: usize = if ancho.as_deref() == Some("80") { 48 } else { 32 };
+    let bytes = build_escpos(&datos, width);
     raw_print_os(&impresora, &bytes)
 }
 
