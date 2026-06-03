@@ -18,25 +18,25 @@ colors:
   warning: "#f59e0b"
 typography:
   title:
-    fontFamily: "system-ui, -apple-system, sans-serif"
+    fontFamily: "'IBM Plex Sans', system-ui, -apple-system, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "normal"
   body:
-    fontFamily: "system-ui, -apple-system, sans-serif"
+    fontFamily: "'IBM Plex Sans', system-ui, -apple-system, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.4
     letterSpacing: "normal"
   label:
-    fontFamily: "system-ui, -apple-system, sans-serif"
+    fontFamily: "'IBM Plex Sans', system-ui, -apple-system, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 500
     lineHeight: 1.3
     letterSpacing: "normal"
   mono:
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+    fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
     fontSize: "0.625rem"
     fontWeight: 400
     lineHeight: 1.2
@@ -137,10 +137,10 @@ Paleta de grises fríos (slate) sobre negro, con un único acento azul accionabl
 
 ## 3. Typography
 
-**Display / Body Font:** system-ui (con `-apple-system`, `sans-serif`)
-**Mono Font:** ui-monospace (con `SFMono-Regular`, `Menlo`) — solo IDs y códigos
+**Display / Body Font:** IBM Plex Sans (fallback `system-ui`, `sans-serif`) — bundled local, offline.
+**Mono Font:** IBM Plex Mono (fallback `ui-monospace`, `Menlo`) — IDs, códigos y preview de ticket.
 
-**Character:** Una sola familia de sistema, sin tipografía de marca. La fuente nativa se renderiza al instante y se ve correcta en cualquier pantalla barata de mostrador. La jerarquía se construye con peso y tamaño, no con familias que compiten.
+**Character:** IBM Plex Sans da identidad de marca sin perder seriedad: grotesca ingenieril, neutral-cálida, muy legible a tamaño chico en pantallas baratas de mostrador. Una sola superfamilia (Sans + Mono) evita familias que compiten; la jerarquía se construye con peso y tamaño. Se autohospeda (no depende de CDN) por la regla offline-first. **Cifras tabulares siempre** (`font-variant-numeric: tabular-nums`): las columnas de plata alinean dígito a dígito.
 
 ### Hierarchy
 - **Title** (700, 1.125rem / `text-lg`, lh 1.2): títulos de pantalla y de modal, totales destacados.

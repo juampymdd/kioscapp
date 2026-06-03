@@ -21,7 +21,7 @@ export default function ScreenHeader({ Icon, title, subtitle, children }: Props)
         <Icon size={18} />
       </div>
       <div className="min-w-0">
-        <h1 className="text-white text-lg font-bold leading-tight truncate">{title}</h1>
+        <h1 className="text-white text-lg font-bold leading-tight truncate tracking-tight">{title}</h1>
         {subtitle && <p className="text-slate-400 text-xs leading-tight mt-0.5">{subtitle}</p>}
       </div>
       {children && <div className="ml-auto flex items-center gap-2 shrink-0">{children}</div>}

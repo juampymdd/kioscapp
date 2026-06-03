@@ -40,7 +40,7 @@ export default function PageHeader({ Icon, title, subtitle, breadcrumb, actions 
           <Icon size={22} />
         </div>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-white leading-tight truncate">{title}</h1>
+          <h1 className="text-2xl font-bold text-white leading-tight truncate tracking-tight">{title}</h1>
           {subtitle && <p className="text-slate-400 text-sm mt-0.5">{subtitle}</p>}
         </div>
         {actions && <div className="ml-auto flex items-center gap-2 shrink-0">{actions}</div>}

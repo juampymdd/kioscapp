@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
   --color-pos-bg: #020617;
   --color-pos-surface: #0f172a;
   --color-pos-card: #1e293b;
@@ -25,7 +28,11 @@ body,
   margin: 0;
   background-color: var(--color-pos-bg);
   color: var(--color-pos-text);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
+  /* Cifras tabulares: columnas de plata siempre alineadas. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   user-select: none;
 }
 
