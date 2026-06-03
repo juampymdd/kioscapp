@@ -90,15 +90,25 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.stock?.length) {
+      let ok = 0, saltados = 0
       for (const s of body.stock) {
-        await db.insert(stock)
-          .values({ ...s, sync_status: 'synced' as const })
-          .onConflictDoUpdate({
-            target: stock.id,
-            set: { cantidad: s.cantidad, alerta_minimo: s.alerta_minimo, updated_at: s.updated_at, deleted_at: s.deleted_at ?? null },
-          })
+        try {
+          await db.insert(stock)
+            .values({ ...s, sync_status: 'synced' as const })
+            .onConflictDoUpdate({
+              target: stock.id,
+              set: { cantidad: s.cantidad, alerta_minimo: s.alerta_minimo, updated_at: s.updated_at, deleted_at: s.deleted_at ?? null },
+            })
+          ok++
+        } catch (e) {
+          // Stock de un producto que el central no conoce (p. ej. seed local de la caja):
+          // no debe tumbar todo el sync. Se saltea esa fila y se sigue.
+          saltados++
+          console.warn('[sync/ingest] stock saltado', s.producto_id, e instanceof Error ? e.message : e)
+        }
       }
-      ingested.stock = body.stock.length
+      ingested.stock = ok
+      if (saltados) ingested.stock_saltados = saltados
     }
 
     if (body.categorias?.length) {
