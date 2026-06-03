@@ -51,8 +51,8 @@ export default function TicketModal({ datos, impresora, ancho = '58', onDone }: 
         <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start">
           <div
             className={`bg-white text-black font-mono leading-5 px-4 py-5
-                       shadow-xl shrink-0 select-none
-                       ${ancho === '80' ? 'w-96 text-[10px]' : 'w-64 text-[11px]'}`}
+                       shadow-xl shrink-0 select-none w-fit
+                       ${ancho === '80' ? 'text-[10px]' : 'text-[11px]'}`}
           >
             {lineas.map((l, i) => {
               if (l.tipo === 'sep') {
@@ -72,7 +72,7 @@ export default function TicketModal({ datos, impresora, ancho = '58', onDone }: 
               return (
                 <div
                   key={i}
-                  className={`whitespace-pre overflow-hidden ${l.negrita ? 'font-bold' : ''}`}
+                  className={`whitespace-pre ${l.negrita ? 'font-bold' : ''}`}
                 >
                   {l.texto}
                 </div>
