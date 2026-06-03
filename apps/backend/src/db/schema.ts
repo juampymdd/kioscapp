@@ -162,6 +162,12 @@ export const descuentos = pgTable('descuentos', {
   tipo:        text('tipo', { enum: ['monto', 'porcentaje'] }).notNull(),
   valor:       integer('valor').notNull(),
   activo:      boolean('activo').notNull().default(true),
+  dias_semana:    text('dias_semana'),
+  vigencia_desde: text('vigencia_desde'),
+  vigencia_hasta: text('vigencia_hasta'),
+  hora_desde:     integer('hora_desde'),
+  hora_hasta:     integer('hora_hasta'),
+  medio_pago:     text('medio_pago'),
 }, t => [
   index('idx_descuentos_user').on(t.user_id),
   index('idx_descuentos_sucursal').on(t.sucursal_id),

@@ -198,4 +198,15 @@ export const migrations = [
       ALTER TABLE productos ADD COLUMN precio_variable INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    description: 'descuentos: condiciones (dias/fechas/horario/medio) — Fase 5',
+    sql: `
+      ALTER TABLE descuentos ADD COLUMN dias_semana TEXT;
+      ALTER TABLE descuentos ADD COLUMN vigencia_desde TEXT;
+      ALTER TABLE descuentos ADD COLUMN vigencia_hasta TEXT;
+      ALTER TABLE descuentos ADD COLUMN hora_desde INTEGER;
+      ALTER TABLE descuentos ADD COLUMN hora_hasta INTEGER;
+      ALTER TABLE descuentos ADD COLUMN medio_pago TEXT;
+    `,
+  },
 ]

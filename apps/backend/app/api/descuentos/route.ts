@@ -25,6 +25,12 @@ export async function POST(req: NextRequest) {
     categoria?: string | null
     tipo?: 'monto' | 'porcentaje'
     valor?: number
+    dias_semana?: string | null
+    vigencia_desde?: string | null
+    vigencia_hasta?: string | null
+    hora_desde?: number | null
+    hora_hasta?: number | null
+    medio_pago?: string | null
   }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'JSON inválido' }, { status: 400 }) }
 
@@ -53,6 +59,12 @@ export async function POST(req: NextRequest) {
     tipo:        body.tipo,
     valor:       body.valor,
     activo:      true,
+    dias_semana:    body.dias_semana ?? null,
+    vigencia_desde: body.vigencia_desde ?? null,
+    vigencia_hasta: body.vigencia_hasta ?? null,
+    hora_desde:     body.hora_desde ?? null,
+    hora_hasta:     body.hora_hasta ?? null,
+    medio_pago:     body.medio_pago ?? null,
     sync_status: 'synced',
     created_at:  now,
     updated_at:  now,

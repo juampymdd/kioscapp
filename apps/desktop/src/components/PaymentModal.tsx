@@ -23,7 +23,7 @@ const MEDIOS: { id: MedioPago; label: string; Icon: LucideIcon }[] = [
 ]
 
 export default function PaymentModal({ onClose, onSuccess }: Props) {
-  const { items, total, descuento_centavos, clear, setDescuento } = useCartStore()
+  const { items, total, descuento_centavos, clear, setDescuento, setMedioPago } = useCartStore()
   const { cajaActiva } = useCajaStore()
   const [medio, setMedio]           = useState<MedioPago>('efectivo')
   const [recibido, setRecibido]     = useState(0)
@@ -40,6 +40,14 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
     getDataStore().getConfig('ancho_papel').then(v => setAnchoPapel(v === '80' ? '80' : '58'))
     // getConfig may return null if not configured
   }, [])
+
+  // Aplicar el medio elegido al carrito (promos condicionales al medio). Al
+  // desmontar (cerrar/cobrar), volver a null para no dejar promos colgadas en el POS.
+  useEffect(() => {
+    setMedioPago(medio)
+    return () => setMedioPago(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [medio])
 
   const totalCentavos    = total()
   const vueltoCentavos   = medio === 'efectivo' ? Math.max(0, recibido - totalCentavos) : 0

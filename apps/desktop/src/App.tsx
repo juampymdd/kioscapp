@@ -17,10 +17,12 @@ import CerrarCaja from './screens/CerrarCaja'
 import ConfigScreen from './screens/ConfigScreen'
 import StockAlerts from './components/StockAlerts'
 import SyncIndicator from './components/SyncIndicator'
+import { runUpdater } from './lib/updater'
 
 export default function App() {
   const { cajaActiva, setCajaActiva } = useCajaStore()
   const [loading,    setLoading]    = useState(true)
+  const [actualizando, setActualizando] = useState(false)
   const [needsSetup, setNeedsSetup] = useState(false)
   const [screen,     setScreen]     = useState<ScreenId>('pos')
   const [showCerrarCaja, setShowCerrarCaja] = useState(false)
@@ -28,7 +30,10 @@ export default function App() {
 
   useEffect(() => {
     const store = getDataStore()
-    store.getConfig('local_id').then(async localId => {
+    void (async () => {
+      // Revisar/instalar actualización antes de cargar (si hay, reinicia solo).
+      await runUpdater(() => setActualizando(true))
+      const localId = await store.getConfig('local_id')
       if (!localId) {
         setNeedsSetup(true)
         setLoading(false)
@@ -37,8 +42,18 @@ export default function App() {
       const caja = await store.getCajaActiva()
       setCajaActiva(caja)
       setLoading(false)
-    })
+    })()
   }, [setCajaActiva])
+
+  if (actualizando) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center gap-3 bg-slate-950">
+        <img src="/kioscapp-icon.svg" width={56} height={56} alt="" draggable={false} />
+        <div className="text-white text-lg font-semibold">Actualizando KioscApp…</div>
+        <div className="text-slate-400 text-sm">Descargando la última versión. Se reinicia solo.</div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolverDescuento, type DescuentoItemInput } from './descuentos'
+import { resolverDescuento, promoVigente, type DescuentoItemInput } from './descuentos'
 import type { Descuento } from './types/descuento'
 
 const item: DescuentoItemInput = {
@@ -66,5 +66,53 @@ describe('resolverDescuento', () => {
       desc({ categoria: 'bebidas', valor: 100, activo: false }),
     ]
     expect(resolverDescuento(item, 200, cat)).toEqual({ centavos: 200, origen: 'manual', detalle: null })
+  })
+})
+
+describe('promoVigente', () => {
+  // 2026-06-03 es miércoles (getDay()=3), 19:00
+  const miercoles19 = new Date(2026, 5, 3, 19, 0)
+  const jueves19    = new Date(2026, 5, 4, 19, 0)
+
+  it('sin condiciones → siempre vigente', () => {
+    expect(promoVigente(desc({}), { fecha: jueves19, medio: 'efectivo' })).toBe(true)
+  })
+
+  it('día de semana: miércoles sí, jueves no', () => {
+    const d = desc({ dias_semana: '3' })
+    expect(promoVigente(d, { fecha: miercoles19, medio: null })).toBe(true)
+    expect(promoVigente(d, { fecha: jueves19, medio: null })).toBe(false)
+  })
+
+  it('rango de fechas: dentro sí, fuera no', () => {
+    const d = desc({ vigencia_desde: '2026-06-01', vigencia_hasta: '2026-06-03' })
+    expect(promoVigente(d, { fecha: miercoles19, medio: null })).toBe(true)
+    expect(promoVigente(d, { fecha: jueves19, medio: null })).toBe(false)
+  })
+
+  it('franja horaria: dentro sí, fuera no', () => {
+    const d = desc({ hora_desde: 18 * 60, hora_hasta: 20 * 60 })
+    expect(promoVigente(d, { fecha: miercoles19, medio: null })).toBe(true)
+    expect(promoVigente(d, { fecha: new Date(2026, 5, 3, 21, 0), medio: null })).toBe(false)
+  })
+
+  it('medio de pago: coincide sí, distinto no, pendiente (null) no', () => {
+    const d = desc({ medio_pago: 'efectivo' })
+    expect(promoVigente(d, { fecha: jueves19, medio: 'efectivo' })).toBe(true)
+    expect(promoVigente(d, { fecha: jueves19, medio: 'debito' })).toBe(false)
+    expect(promoVigente(d, { fecha: jueves19, medio: null })).toBe(false)
+  })
+
+  it('resolver aplica la promo solo si está vigente', () => {
+    const cat = [desc({ tipo: 'porcentaje', valor: 10, dias_semana: '3', medio_pago: 'efectivo' })]
+    // miércoles + efectivo → 10% de 1000 = 100
+    expect(resolverDescuento(item, null, cat, { fecha: miercoles19, medio: 'efectivo' }))
+      .toEqual({ centavos: 100, origen: 'promo', detalle: '10%' })
+    // miércoles pero débito → no aplica
+    expect(resolverDescuento(item, null, cat, { fecha: miercoles19, medio: 'debito' }))
+      .toEqual({ centavos: 0, origen: null, detalle: null })
+    // jueves → no aplica
+    expect(resolverDescuento(item, null, cat, { fecha: jueves19, medio: 'efectivo' }))
+      .toEqual({ centavos: 0, origen: null, detalle: null })
   })
 })

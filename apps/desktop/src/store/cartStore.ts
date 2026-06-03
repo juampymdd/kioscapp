@@ -26,12 +26,14 @@ interface CartStore {
   items: CartItem[]
   descuento_centavos: number          // descuento global manual de la venta
   catalogo: Descuento[]               // catálogo bajado del central
+  medio: string | null                // medio de pago elegido en el cobro (null = aún no)
   addItem: (producto: Producto, cantidad?: number, precioUnit?: number) => void
   removeItem: (productoId: string) => void
   updateCantidad: (productoId: string, cantidad: number) => void
   setDescuentoManualItem: (productoId: string, centavos: number | null, detalle?: string | null) => void
   setDescuento: (centavos: number) => void
   setCatalogo: (catalogo: Descuento[]) => void
+  setMedioPago: (medio: string | null) => void
   clear: () => void
   subtotal: () => number
   descuentoItems: () => number
@@ -39,7 +41,7 @@ interface CartStore {
 }
 
 /** Recalcula subtotal y descuento efectivo (con origen + detalle) de un ítem. */
-function recalcItem(item: CartItem, catalogo: Descuento[]): CartItem {
+function recalcItem(item: CartItem, catalogo: Descuento[], medio: string | null): CartItem {
   // Redondear a 3 decimales evita el drift de float del stepper (0.1 + 0.1 + ...).
   const cantidad = Math.round(item.cantidad * 1000) / 1000
   item = { ...item, cantidad }
@@ -49,6 +51,7 @@ function recalcItem(item: CartItem, catalogo: Descuento[]): CartItem {
     { producto_id: item.producto.id, categoria: item.producto.categoria, subtotal_centavos },
     item.descuentoManual_centavos,
     catalogo,
+    { fecha: new Date(), medio },
   )
   // El detalle del manual lo aporta el carrito (resolver no conoce el modo %/$).
   const descuento_detalle = origen === 'manual' ? item.descuentoManual_detalle : detalle
@@ -64,6 +67,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   descuento_centavos: 0,
   catalogo: [],
+  medio: null,
 
   addItem(producto, cantidad = 1, precioUnit) {
     set(state => {
@@ -80,7 +84,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       // Precio variable (monto tipeado al vender): línea única, cantidad 1.
       // Re-agregar reemplaza el monto en vez de acumular cantidades.
       if (precioUnit != null) {
-        const linea = recalcItem({ ...base, cantidad: 1 }, state.catalogo)
+        const linea = recalcItem({ ...base, cantidad: 1 }, state.catalogo, state.medio)
         const items = existing
           ? state.items.map(i => i.producto.id === producto.id ? linea : i)
           : [...state.items, linea]
@@ -89,9 +93,9 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
       const items = existing
         ? state.items.map(i => i.producto.id === producto.id
-            ? recalcItem({ ...i, cantidad: i.cantidad + cantidad }, state.catalogo)
+            ? recalcItem({ ...i, cantidad: i.cantidad + cantidad }, state.catalogo, state.medio)
             : i)
-        : [...state.items, recalcItem({ ...base, cantidad }, state.catalogo)]
+        : [...state.items, recalcItem({ ...base, cantidad }, state.catalogo, state.medio)]
       return { items }
     })
   },
@@ -104,7 +108,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     if (cantidad <= 0) { get().removeItem(productoId); return }
     set(state => ({
       items: state.items.map(i =>
-        i.producto.id === productoId ? recalcItem({ ...i, cantidad }, state.catalogo) : i),
+        i.producto.id === productoId ? recalcItem({ ...i, cantidad }, state.catalogo, state.medio) : i),
     }))
   },
 
@@ -112,7 +116,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set(state => ({
       items: state.items.map(i =>
         i.producto.id === productoId
-          ? recalcItem({ ...i, descuentoManual_centavos: centavos, descuentoManual_detalle: detalle }, state.catalogo)
+          ? recalcItem({ ...i, descuentoManual_centavos: centavos, descuentoManual_detalle: detalle }, state.catalogo, state.medio)
           : i),
     }))
   },
@@ -120,10 +124,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
   setDescuento(centavos) { set({ descuento_centavos: Math.max(0, centavos) }) },
 
   setCatalogo(catalogo) {
-    set(state => ({ catalogo, items: state.items.map(i => recalcItem(i, catalogo)) }))
+    set(state => ({ catalogo, items: state.items.map(i => recalcItem(i, catalogo, state.medio)) }))
   },
 
-  clear() { set({ items: [], descuento_centavos: 0 }) },
+  setMedioPago(medio) {
+    set(state => ({ medio, items: state.items.map(i => recalcItem(i, state.catalogo, medio)) }))
+  },
+
+  clear() { set({ items: [], descuento_centavos: 0, medio: null }) },
 
   subtotal() { return get().items.reduce((acc, i) => acc + i.subtotal_centavos, 0) },
   descuentoItems() { return get().items.reduce((acc, i) => acc + i.descuento_centavos, 0) },

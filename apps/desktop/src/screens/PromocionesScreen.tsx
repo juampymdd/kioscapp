@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Tag, Trash2, Plus } from 'lucide-react'
 import type { Descuento, Producto, Categoria } from '@kioscapp/shared'
+import { condicionesTexto, horaAMin } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { useCartStore } from '../store/cartStore'
 import ScreenHeader from '../components/ScreenHeader'
@@ -19,6 +20,19 @@ export default function PromocionesScreen() {
   const [productoId, setProductoId] = useState('')
   const [tipo, setTipo]           = useState<'porcentaje' | 'monto'>('porcentaje')
   const [valor, setValor]         = useState('10')
+
+  // Condiciones
+  const [dias, setDias]           = useState<number[]>([])   // getDay() 0-6
+  const [desde, setDesde]         = useState('')             // YYYY-MM-DD
+  const [hasta, setHasta]         = useState('')
+  const [horaDesde, setHoraDesde] = useState('')             // HH:MM
+  const [horaHasta, setHoraHasta] = useState('')
+  const [medioPago, setMedioPago] = useState('')             // '' = cualquiera
+
+  const DIAS_UI = [['Lun', 1], ['Mar', 2], ['Mié', 3], ['Jue', 4], ['Vie', 5], ['Sáb', 6], ['Dom', 0]] as const
+  function toggleDia(n: number) {
+    setDias(d => d.includes(n) ? d.filter(x => x !== n) : [...d, n])
+  }
 
   async function cargar() {
     try {
@@ -59,10 +73,16 @@ export default function PromocionesScreen() {
       deleted_at: null,
       origen: 'local',
       sync_status: 'pending',
+      dias_semana: dias.length ? [...dias].sort((a, b) => a - b).join(',') : null,
+      vigencia_desde: desde || null,
+      vigencia_hasta: hasta || null,
+      hora_desde: horaAMin(horaDesde),
+      hora_hasta: horaAMin(horaHasta),
+      medio_pago: medioPago || null,
     }
     await getDataStore().upsertDescuento(d)
     setMostrarForm(false)
-    setValor('10')
+    setValor('10'); setDias([]); setDesde(''); setHasta(''); setHoraDesde(''); setHoraHasta(''); setMedioPago('')
     await cargar()
     await refrescarCarrito()
   }
@@ -138,6 +158,50 @@ export default function PromocionesScreen() {
                 className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white" />
             </label>
 
+            {/* Condiciones */}
+            <div className="col-span-2 border-t border-slate-800 pt-3">
+              <p className="text-xs text-slate-500 mb-2">Condiciones (opcionales)</p>
+              <div className="flex flex-wrap gap-1 mb-3">
+                {DIAS_UI.map(([lbl, n]) => (
+                  <button key={n} type="button" onClick={() => toggleDia(n)}
+                    className={`text-xs px-2.5 py-1 rounded-lg cursor-pointer transition-colors
+                      ${dias.includes(n) ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>
+                    {lbl}
+                  </button>
+                ))}
+                <span className="text-[11px] text-slate-600 self-center ml-1">{dias.length ? '' : 'todos los días'}</span>
+              </div>
+            </div>
+
+            <label className="text-xs text-slate-400">Desde (fecha)
+              <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
+                className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white" />
+            </label>
+            <label className="text-xs text-slate-400">Hasta (fecha)
+              <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
+                className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white" />
+            </label>
+
+            <label className="text-xs text-slate-400">Desde (hora)
+              <input type="time" value={horaDesde} onChange={e => setHoraDesde(e.target.value)}
+                className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white" />
+            </label>
+            <label className="text-xs text-slate-400">Hasta (hora)
+              <input type="time" value={horaHasta} onChange={e => setHoraHasta(e.target.value)}
+                className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white" />
+            </label>
+
+            <label className="text-xs text-slate-400 col-span-2">Medio de pago
+              <select value={medioPago} onChange={e => setMedioPago(e.target.value)}
+                className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                <option value="">Cualquiera</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="debito">Débito</option>
+                <option value="credito">Crédito</option>
+                <option value="qr_mercado_pago">QR / Mercado Pago</option>
+              </select>
+            </label>
+
             <div className="col-span-2 flex gap-2">
               <button onClick={crear} className="flex-1 bg-blue-600 hover:bg-blue-500 rounded-xl py-2 text-white font-medium cursor-pointer">
                 Guardar promo
@@ -173,6 +237,7 @@ export default function PromocionesScreen() {
               <tr className="border-b border-slate-800 text-slate-500 text-xs uppercase tracking-wide">
                 <th className="py-2">Aplica a</th>
                 <th>Descuento</th>
+                <th>Cuándo</th>
                 <th>Ámbito</th>
                 <th>Origen</th>
                 <th>Estado</th>
@@ -186,6 +251,7 @@ export default function PromocionesScreen() {
                   <tr key={d.id} className={d.activo ? '' : 'opacity-50'}>
                     <td className="py-2.5 text-white">{objetivoTxt(d)}</td>
                     <td className="text-amber-400 tabular-nums">− {valorTxt(d)}</td>
+                    <td className="text-slate-400 text-xs">{condicionesTexto(d) || 'Siempre'}</td>
                     <td className="text-slate-400">{d.sucursal_id ? 'Sucursal' : 'Global'}</td>
                     <td>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${local ? 'bg-blue-900/40 text-blue-300' : 'bg-slate-700 text-slate-300'}`}>

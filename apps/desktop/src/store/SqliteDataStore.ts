@@ -167,6 +167,12 @@ function mapDescuento(r: Row): Descuento {
     deleted_at: (r.deleted_at as string | null) ?? null,
     origen: (r.origen as Descuento['origen']) ?? 'central',
     sync_status: (r.sync_status as Descuento['sync_status']) ?? 'synced',
+    dias_semana: (r.dias_semana as string | null) ?? null,
+    vigencia_desde: (r.vigencia_desde as string | null) ?? null,
+    vigencia_hasta: (r.vigencia_hasta as string | null) ?? null,
+    hora_desde: (r.hora_desde as number | null) ?? null,
+    hora_hasta: (r.hora_hasta as number | null) ?? null,
+    medio_pago: (r.medio_pago as string | null) ?? null,
   }
 }
 
@@ -514,18 +520,24 @@ export class SqliteDataStore implements DataStore {
     await this.db.execute(
       `INSERT INTO descuentos
          (id, user_id, sucursal_id, objetivo, producto_id, categoria, tipo, valor,
-          activo, created_at, updated_at, deleted_at, origen, sync_status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          activo, created_at, updated_at, deleted_at, origen, sync_status,
+          dias_semana, vigencia_desde, vigencia_hasta, hora_desde, hora_hasta, medio_pago)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
        ON CONFLICT(id) DO UPDATE SET
          sucursal_id=excluded.sucursal_id, objetivo=excluded.objetivo,
          producto_id=excluded.producto_id, categoria=excluded.categoria,
          tipo=excluded.tipo, valor=excluded.valor, activo=excluded.activo,
          updated_at=excluded.updated_at, deleted_at=excluded.deleted_at,
-         origen=excluded.origen, sync_status=excluded.sync_status`,
+         origen=excluded.origen, sync_status=excluded.sync_status,
+         dias_semana=excluded.dias_semana, vigencia_desde=excluded.vigencia_desde,
+         vigencia_hasta=excluded.vigencia_hasta, hora_desde=excluded.hora_desde,
+         hora_hasta=excluded.hora_hasta, medio_pago=excluded.medio_pago`,
       [
         d.id, d.user_id, d.sucursal_id, d.objetivo, d.producto_id, d.categoria,
         d.tipo, d.valor, d.activo ? 1 : 0, d.created_at, d.updated_at, d.deleted_at,
         d.origen ?? 'central', d.sync_status ?? 'synced',
+        d.dias_semana ?? null, d.vigencia_desde ?? null, d.vigencia_hasta ?? null,
+        d.hora_desde ?? null, d.hora_hasta ?? null, d.medio_pago ?? null,
       ],
     )
   }
