@@ -1,6 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { Tag } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Tag, Store, Globe, HelpCircle, Check } from 'lucide-react'
 import { horaAMin, minAHora } from '@kioscapp/shared'
 import PageHeader from '../_components/PageHeader'
 import Skeleton from '../_components/Skeleton'
@@ -34,6 +34,61 @@ function cuandoTxt(d: Descuento): string {
 type Sucursal = { id: string; nombre: string }
 type Producto = { id: string; descripcion: string }
 type Categoria = { id: string; nombre: string }
+
+/** Autocompletado de sucursal: escribís para filtrar, vacío = global (todas). */
+function SucursalCombobox({ sucursales, value, onChange }: {
+  sucursales: Sucursal[]; value: string; onChange: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  const seleccionada = value ? sucursales.find(s => s.id === value) : null
+  const filtradas = sucursales.filter(s => s.nombre.toLowerCase().includes(q.toLowerCase()))
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open])
+
+  function elegir(id: string) { onChange(id); setOpen(false); setQ('') }
+
+  return (
+    <div ref={boxRef} className="relative">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="mt-1 w-full flex items-center gap-2 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-50 text-left">
+        {seleccionada
+          ? <><Store size={14} className="text-blue-400 shrink-0" /><span className="truncate">{seleccionada.nombre}</span></>
+          : <><Globe size={14} className="text-slate-400 shrink-0" /><span className="text-slate-300">Global (todas las sucursales)</span></>}
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden">
+          <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar sucursal…"
+            className="w-full bg-slate-900 border-b border-slate-700 px-3 py-2 text-slate-50 text-sm focus:outline-none" />
+          <div className="max-h-48 overflow-y-auto">
+            <button type="button" onClick={() => elegir('')}
+              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-700">
+              <Globe size={14} className="text-slate-400 shrink-0" />
+              <span className="flex-1">Global (todas las sucursales)</span>
+              {!value && <Check size={14} className="text-blue-400" />}
+            </button>
+            {filtradas.map(s => (
+              <button key={s.id} type="button" onClick={() => elegir(s.id)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-700">
+                <Store size={14} className="text-blue-400 shrink-0" />
+                <span className="flex-1 truncate">{s.nombre}</span>
+                {value === s.id && <Check size={14} className="text-blue-400" />}
+              </button>
+            ))}
+            {filtradas.length === 0 && <p className="px-3 py-3 text-xs text-slate-500">Sin coincidencias</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function DescuentosPage() {
   const [items, setItems] = useState<Descuento[]>([])
@@ -151,13 +206,19 @@ export default function DescuentosPage() {
       <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b border-slate-800 font-bold text-lg flex items-center gap-2"><Tag size={18} className="text-blue-400" /> Nueva promoción</div>
         <div className="flex-1 overflow-y-auto p-5 grid grid-cols-2 gap-3">
-        <label className="text-xs text-slate-400">Ámbito
-          <select value={form.sucursal_id} onChange={e => setForm({ ...form, sucursal_id: e.target.value })}
-            className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-50">
-            <option value="">Global (todas)</option>
-            {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-          </select>
-        </label>
+        <div className="text-xs text-slate-400">
+          <span className="flex items-center gap-1.5">
+            Ámbito
+            <span className="group relative inline-flex">
+              <HelpCircle size={13} className="text-slate-500 cursor-help" />
+              <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-56 z-20 hidden group-hover:block bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-[11px] leading-snug text-slate-300 shadow-xl normal-case">
+                <b className="text-slate-100">Global</b>: la promo aplica en todas las sucursales.<br />
+                Elegí una <b className="text-slate-100">sucursal</b> para que solo aplique en esa caja.
+              </span>
+            </span>
+          </span>
+          <SucursalCombobox sucursales={sucursales} value={form.sucursal_id} onChange={id => setForm({ ...form, sucursal_id: id })} />
+        </div>
         <label className="text-xs text-slate-400">Objetivo
           <select value={form.objetivo} onChange={e => setForm({ ...form, objetivo: e.target.value as typeof form.objetivo })}
             className="mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-50">
