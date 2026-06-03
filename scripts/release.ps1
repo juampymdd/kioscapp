@@ -8,6 +8,8 @@
 
 param([Parameter(Mandatory = $true)][string]$Version)
 $ErrorActionPreference = 'Stop'
+# Hacer que un git con exit-code != 0 corte el script (PS7).
+$PSNativeCommandUseErrorActionPreference = $true
 
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
   Write-Error "Versión inválida '$Version'. Usá X.Y.Z (ej: 0.1.1)"
@@ -36,7 +38,12 @@ $c = [regex]::Replace($c, '(?m)^version = "[^"]+"', "version = `"$Version`"", 1)
 Write-Host "Versión -> $Version" -ForegroundColor Cyan
 
 git -C $root add $tauriConf $cargo $pkg
-git -C $root commit -m "release: v$Version"
+# Si la versión no cambió, no hay nada que commitear: solo tageamos.
+if (git -C $root diff --cached --quiet; $LASTEXITCODE -ne 0) {
+  git -C $root commit -m "release: v$Version"
+} else {
+  Write-Host "Sin cambios de versión (ya estaba en $Version): solo creo el tag." -ForegroundColor Yellow
+}
 git -C $root tag "v$Version"
 git -C $root push origin HEAD
 git -C $root push origin "v$Version"

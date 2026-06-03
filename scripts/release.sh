@@ -27,7 +27,11 @@ sed -i.bak -E "0,/^version = \"[^\"]+\"/s//version = \"$ver\"/" "$cargo" && rm -
 echo "Versión -> $ver"
 
 git -C "$root" add "$tauri_conf" "$cargo" "$pkg"
-git -C "$root" commit -m "release: v$ver"
+if git -C "$root" diff --cached --quiet; then
+  echo "Sin cambios de versión (ya estaba en $ver): solo creo el tag."
+else
+  git -C "$root" commit -m "release: v$ver"
+fi
 git -C "$root" tag "v$ver"
 git -C "$root" push origin HEAD
 git -C "$root" push origin "v$ver"
