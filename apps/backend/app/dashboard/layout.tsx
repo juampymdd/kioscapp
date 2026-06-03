@@ -4,6 +4,7 @@ import { getSession } from '@/src/lib/session'
 import LogoutButton from './_components/LogoutButton'
 import Logo from '../_components/Logo'
 import DashboardNav from './_components/DashboardNav'
+import { ConfirmProvider } from './_components/confirm'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession()
@@ -31,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </header>
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
-        {children}
+        <ConfirmProvider>{children}</ConfirmProvider>
       </main>
     </div>
   )

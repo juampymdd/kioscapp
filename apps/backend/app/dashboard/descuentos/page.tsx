@@ -4,6 +4,7 @@ import { Tag, Store, Globe, HelpCircle, Check } from 'lucide-react'
 import { horaAMin, minAHora } from '@kioscapp/shared'
 import PageHeader from '../_components/PageHeader'
 import Skeleton from '../_components/Skeleton'
+import { useConfirm } from '../_components/confirm'
 
 type Descuento = {
   id: string; sucursal_id: string | null; objetivo: 'producto' | 'categoria' | 'todos'
@@ -91,6 +92,7 @@ function SucursalCombobox({ sucursales, value, onChange }: {
 }
 
 export default function DescuentosPage() {
+  const confirm = useConfirm()
   const [items, setItems] = useState<Descuento[]>([])
   const [cargando, setCargando] = useState(true)
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
@@ -142,6 +144,11 @@ export default function DescuentosPage() {
     await cargar()
   }
   async function borrar(d: Descuento) {
+    const ok = await confirm({
+      titulo: '¿Eliminar esta promoción?',
+      mensaje: `${objetivoTxt(d)} · ${valorTxt(d)} en ${ambitoTxt(d)}. No se puede deshacer.`,
+    })
+    if (!ok) return
     await fetch(`/api/descuentos/${d.id}`, { method: 'DELETE' })
     await cargar()
   }

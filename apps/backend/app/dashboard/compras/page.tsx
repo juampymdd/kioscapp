@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { ShoppingBag } from 'lucide-react'
 import PageHeader from '../_components/PageHeader'
 import Skeleton from '../_components/Skeleton'
+import { useConfirm } from '../_components/confirm'
 
 type Compra = {
   id: string; fecha: string; total_centavos: number; notas: string | null
@@ -14,6 +15,7 @@ type Proveedor = { id: string; nombre: string }
 const pesos = (c: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format((c ?? 0) / 100)
 
 export default function ComprasPage() {
+  const confirm = useConfirm()
   const [items, setItems] = useState<Compra[]>([])
   const [sucs, setSucs] = useState<Sucursal[]>([])
   const [provs, setProvs] = useState<Proveedor[]>([])
@@ -40,7 +42,14 @@ export default function ComprasPage() {
       body: JSON.stringify({ sucursal_id: form.sucursal_id || null, proveedor_id: form.proveedor_id || null, fecha: form.fecha, total_centavos: total, notas: form.notas || null }) })
     setForm(null); await cargar()
   }
-  async function borrar(id: string) { await fetch(`/api/compras/${id}`, { method: 'DELETE' }); await cargar() }
+  async function borrar(c: Compra) {
+    const ok = await confirm({
+      titulo: '¿Eliminar esta compra?',
+      mensaje: `${c.fecha} · ${c.proveedor_nombre ?? 'sin proveedor'} · ${pesos(c.total_centavos)}. No se puede deshacer.`,
+    })
+    if (!ok) return
+    await fetch(`/api/compras/${c.id}`, { method: 'DELETE' }); await cargar()
+  }
 
   const totalMes = items.reduce((s, c) => s + c.total_centavos, 0)
   const inputCls = 'mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-50 text-sm'
@@ -67,7 +76,7 @@ export default function ComprasPage() {
                 <td className="text-slate-400">{c.proveedor_nombre ?? '—'}</td>
                 <td className="text-slate-500">{c.notas ?? '—'}</td>
                 <td className="text-right tabular-nums">{pesos(c.total_centavos)}</td>
-                <td className="text-right"><button onClick={() => borrar(c.id)} className="text-red-400 hover:text-red-300 text-xs">Eliminar</button></td>
+                <td className="text-right"><button onClick={() => borrar(c)} className="text-red-400 hover:text-red-300 text-xs">Eliminar</button></td>
               </tr>
             ))}
             {!cargando && items.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Sin compras registradas</td></tr>}

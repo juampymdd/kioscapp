@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Truck } from 'lucide-react'
 import PageHeader from '../_components/PageHeader'
 import Skeleton from '../_components/Skeleton'
+import { useConfirm } from '../_components/confirm'
 
 type Proveedor = {
   id: string; nombre: string; telefono: string | null; email: string | null; notas: string | null; activo: boolean
@@ -10,6 +11,7 @@ type Proveedor = {
 type Form = { id?: string; nombre: string; telefono: string; email: string; notas: string }
 
 export default function ProveedoresPage() {
+  const confirm = useConfirm()
   const [items, setItems] = useState<Proveedor[]>([])
   const [cargando, setCargando] = useState(true)
   const [edit, setEdit] = useState<Form | null>(null)
@@ -29,7 +31,14 @@ export default function ProveedoresPage() {
     else await fetch('/api/proveedores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     setEdit(null); await cargar()
   }
-  async function borrar(id: string) { await fetch(`/api/proveedores/${id}`, { method: 'DELETE' }); setEdit(null); await cargar() }
+  async function borrar(id: string) {
+    const ok = await confirm({
+      titulo: `¿Eliminar a "${edit?.nombre ?? 'este proveedor'}"?`,
+      mensaje: 'Se quita de la lista de proveedores. No se puede deshacer.',
+    })
+    if (!ok) return
+    await fetch(`/api/proveedores/${id}`, { method: 'DELETE' }); setEdit(null); await cargar()
+  }
 
   const inputCls = 'mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 

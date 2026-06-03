@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Package } from 'lucide-react'
 import PageHeader from '../_components/PageHeader'
 import Skeleton from '../_components/Skeleton'
+import { useConfirm } from '../_components/confirm'
 
 type Producto = {
   id: string; descripcion: string; categoria: string; precio_centavos: number
@@ -19,6 +20,7 @@ type Form = {
 }
 
 export default function ProductosPage() {
+  const confirm = useConfirm()
   const [items, setItems] = useState<Producto[]>([])
   const [cats, setCats] = useState<Categoria[]>([])
   const [cargando, setCargando] = useState(true)
@@ -69,6 +71,11 @@ export default function ProductosPage() {
     setEdit(null); await cargar()
   }
   async function borrar(id: string) {
+    const ok = await confirm({
+      titulo: `¿Eliminar "${edit?.descripcion ?? 'este producto'}"?`,
+      mensaje: 'Deja de estar disponible en las cajas. No se puede deshacer.',
+    })
+    if (!ok) return
     await fetch(`/api/productos/${id}`, { method: 'DELETE' }); setEdit(null); await cargar()
   }
 

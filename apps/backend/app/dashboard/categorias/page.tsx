@@ -4,6 +4,7 @@ import { icons, Package, Tags, type LucideProps } from 'lucide-react'
 import type { ComponentType } from 'react'
 import IconPicker from '../_components/IconPicker'
 import PageHeader from '../_components/PageHeader'
+import { useConfirm } from '../_components/confirm'
 
 type Categoria = {
   id: string; nombre: string; icono: string; color: string | null; orden: number; activo: boolean
@@ -15,6 +16,7 @@ function Icono({ name, size = 18 }: { name: string; size?: number }) {
 }
 
 export default function CategoriasPage() {
+  const confirm = useConfirm()
   const [items, setItems] = useState<Categoria[]>([])
   const [edit, setEdit] = useState<Partial<Categoria> | null>(null)
 
@@ -35,6 +37,11 @@ export default function CategoriasPage() {
     setEdit(null); await cargar()
   }
   async function borrar(id: string) {
+    const ok = await confirm({
+      titulo: `¿Eliminar la categoría "${edit?.nombre ?? ''}"?`,
+      mensaje: 'Los productos de esta categoría quedan sin rubro. No se puede deshacer.',
+    })
+    if (!ok) return
     await fetch(`/api/categorias/${id}`, { method: 'DELETE' }); setEdit(null); await cargar()
   }
 
