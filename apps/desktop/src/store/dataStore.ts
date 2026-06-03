@@ -14,6 +14,15 @@ import type { Stock } from '@kioscapp/shared'
 import type { Proveedor } from '@kioscapp/shared'
 import type { Descuento } from '@kioscapp/shared'
 import type { Categoria } from '@kioscapp/shared'
+import type { ProductoProveedor, Pedido, PedidoItem } from '@kioscapp/shared'
+
+/** Fila de reposición: producto con stock bajo + un proveedor que lo provee. */
+export interface FilaReposicion {
+  producto: Producto
+  stock: Stock
+  proveedor: Proveedor
+  costo_centavos: number
+}
 
 export interface DataStore {
   // ── Productos ─────────────────────────────────────────────────────────────
@@ -49,6 +58,16 @@ export interface DataStore {
   getProveedores(): Promise<Proveedor[]>
   upsertProveedor(p: Proveedor): Promise<void>
   deleteProveedor(id: string): Promise<void>
+
+  // ── Compras: vínculo producto↔proveedor + pedidos ──────────────────────────
+  getProveedoresDeProducto(productoId: string): Promise<ProductoProveedor[]>
+  setProveedoresDeProducto(productoId: string, vinculos: Array<{ proveedor_id: string; costo_centavos: number }>): Promise<void>
+  getReposicion(): Promise<FilaReposicion[]>
+  incrementarStock(productoId: string, cantidad: number): Promise<void>
+  crearPedido(pedido: Omit<Pedido, 'sync_status'>, items: Omit<PedidoItem, 'sync_status'>[]): Promise<void>
+  getPedidos(): Promise<Pedido[]>
+  getPedidoItems(pedidoId: string): Promise<PedidoItem[]>
+  marcarPedidoRecibido(pedidoId: string): Promise<void>
 
   // ── Config local ─────────────────────────────────────────────────────────
   getConfig(key: string): Promise<string | null>

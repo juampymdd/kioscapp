@@ -136,6 +136,44 @@ export const precios_sucursal = pgTable('precios_sucursal', {
   precio_centavos: integer('precio_centavos').notNull(),
 }, t => [index('idx_precios_sucursal').on(t.sucursal_id)])
 
+// Reposición/pedidos sincronizados desde el desktop.
+
+export const producto_proveedores = pgTable('producto_proveedores', {
+  ...syncFields,
+  producto_id:    text('producto_id').notNull(),
+  proveedor_id:   text('proveedor_id').notNull(),
+  costo_centavos: integer('costo_centavos').notNull().default(0),
+}, t => [
+  index('idx_prodprov_prod').on(t.producto_id),
+  index('idx_prodprov_prov').on(t.proveedor_id),
+])
+
+export const pedidos = pgTable('pedidos', {
+  ...syncFields,
+  proveedor_id:   text('proveedor_id').notNull(),
+  estado:         text('estado', { enum: ['pendiente', 'recibido'] }).notNull().default('pendiente'),
+  total_centavos: integer('total_centavos').notNull().default(0),
+  recibido_at:    text('recibido_at'),
+}, t => [
+  index('idx_pedidos_prov').on(t.proveedor_id),
+  index('idx_pedidos_local').on(t.local_id),
+])
+
+export const pedido_items = pgTable('pedido_items', {
+  id:                  text('id').primaryKey(),
+  created_at:          text('created_at').notNull(),
+  local_id:            text('local_id').notNull(),
+  sync_status:         text('sync_status', { enum: ['pending', 'synced'] }).notNull().default('synced'),
+  pedido_id:           text('pedido_id').notNull(),
+  producto_id:         text('producto_id').notNull(),
+  descripcion:         text('descripcion').notNull(),
+  cantidad:            real('cantidad').notNull(),
+  costo_unit_centavos: integer('costo_unit_centavos').notNull(),
+  subtotal_centavos:   integer('subtotal_centavos').notNull(),
+}, t => [
+  index('idx_pedido_items_pedido').on(t.pedido_id),
+])
+
 // Platform tables — not synced from desktop, managed via web dashboard
 
 export const users = pgTable('users', {

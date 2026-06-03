@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
-import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta, categorias, stock } from '@/src/db/schema'
+import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta, categorias, stock, producto_proveedores, pedidos, pedido_items } from '@/src/db/schema'
 import { optionsResponse, withCors } from '@/src/lib/cors'
 import { and, eq } from 'drizzle-orm'
 
@@ -13,6 +13,9 @@ type IngestPayload = {
   proveedores?: (typeof proveedores.$inferInsert)[]
   categorias?: (typeof categorias.$inferInsert)[]
   stock?: (typeof stock.$inferInsert)[]
+  producto_proveedores?: (typeof producto_proveedores.$inferInsert)[]
+  pedidos?: (typeof pedidos.$inferInsert)[]
+  pedido_items?: (typeof pedido_items.$inferInsert)[]
 }
 
 async function checkAuth(req: NextRequest, localId: string): Promise<boolean> {
@@ -125,6 +128,37 @@ export async function POST(req: NextRequest) {
           })
       }
       ingested.categorias = body.categorias.length
+    }
+
+    if (body.producto_proveedores?.length) {
+      for (const pp of body.producto_proveedores) {
+        await db.insert(producto_proveedores)
+          .values({ ...pp, sync_status: 'synced' as const })
+          .onConflictDoUpdate({
+            target: producto_proveedores.id,
+            set: { costo_centavos: pp.costo_centavos, updated_at: pp.updated_at, deleted_at: pp.deleted_at ?? null },
+          })
+      }
+      ingested.producto_proveedores = body.producto_proveedores.length
+    }
+
+    if (body.pedidos?.length) {
+      for (const p of body.pedidos) {
+        await db.insert(pedidos)
+          .values({ ...p, sync_status: 'synced' as const })
+          .onConflictDoUpdate({
+            target: pedidos.id,
+            set: { estado: p.estado, total_centavos: p.total_centavos, recibido_at: p.recibido_at ?? null, updated_at: p.updated_at },
+          })
+      }
+      ingested.pedidos = body.pedidos.length
+    }
+
+    if (body.pedido_items?.length) {
+      await db.insert(pedido_items)
+        .values(body.pedido_items.map(i => ({ ...i, sync_status: 'synced' as const })))
+        .onConflictDoNothing()
+      ingested.pedido_items = body.pedido_items.length
     }
 
     return withCors(NextResponse.json({ ok: true, ingested }))

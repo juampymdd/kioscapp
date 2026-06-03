@@ -1,8 +1,9 @@
 import Database from '@tauri-apps/plugin-sql'
 import type {
   Producto, Venta, VentaItem, Caja, MovimientoCaja, Stock, Proveedor, Descuento, Categoria,
+  ProductoProveedor, Pedido, PedidoItem,
 } from '@kioscapp/shared'
-import type { DataStore } from './dataStore'
+import type { DataStore, FilaReposicion } from './dataStore'
 import { migrations } from '../lib/migrations'
 
 type Row = Record<string, unknown>
@@ -174,6 +175,50 @@ function mapDescuento(r: Row): Descuento {
     hora_desde: (r.hora_desde as number | null) ?? null,
     hora_hasta: (r.hora_hasta as number | null) ?? null,
     medio_pago: (r.medio_pago as string | null) ?? null,
+  }
+}
+
+function mapProductoProveedor(r: Row): ProductoProveedor {
+  return {
+    id: r.id as string,
+    producto_id: r.producto_id as string,
+    proveedor_id: r.proveedor_id as string,
+    costo_centavos: r.costo_centavos as number,
+    created_at: (r.created_at as string) ?? '',
+    updated_at: (r.updated_at as string) ?? '',
+    local_id: (r.local_id as string) ?? '',
+    sync_status: (r.sync_status as 'pending' | 'synced') ?? 'pending',
+    deleted_at: (r.deleted_at as string | null) ?? null,
+  }
+}
+
+function mapPedido(r: Row): Pedido {
+  return {
+    id: r.id as string,
+    proveedor_id: r.proveedor_id as string,
+    estado: r.estado as Pedido['estado'],
+    total_centavos: r.total_centavos as number,
+    recibido_at: (r.recibido_at as string | null) ?? null,
+    created_at: (r.created_at as string) ?? '',
+    updated_at: (r.updated_at as string) ?? '',
+    local_id: (r.local_id as string) ?? '',
+    sync_status: (r.sync_status as 'pending' | 'synced') ?? 'pending',
+    deleted_at: (r.deleted_at as string | null) ?? null,
+  }
+}
+
+function mapPedidoItem(r: Row): PedidoItem {
+  return {
+    id: r.id as string,
+    created_at: r.created_at as string,
+    local_id: r.local_id as string,
+    sync_status: r.sync_status as 'pending' | 'synced',
+    pedido_id: r.pedido_id as string,
+    producto_id: r.producto_id as string,
+    descripcion: r.descripcion as string,
+    cantidad: r.cantidad as number,
+    costo_unit_centavos: r.costo_unit_centavos as number,
+    subtotal_centavos: r.subtotal_centavos as number,
   }
 }
 
@@ -514,6 +559,145 @@ export class SqliteDataStore implements DataStore {
     )
   }
 
+  // ── Compras: vínculo producto↔proveedor + pedidos ────────────────────────────
+
+  async getProveedoresDeProducto(productoId: string): Promise<ProductoProveedor[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM producto_proveedores WHERE producto_id=$1 AND deleted_at IS NULL`,
+      [productoId],
+    )
+    return rows.map(mapProductoProveedor)
+  }
+
+  async setProveedoresDeProducto(
+    productoId: string,
+    vinculos: Array<{ proveedor_id: string; costo_centavos: number }>,
+  ): Promise<void> {
+    const ts = now()
+    const lid = (await this.getConfig('local_id')) ?? 'local-demo'
+    // Soft-delete todos los vínculos del producto; los que sigan se reactivan abajo.
+    await this.db.execute(
+      `UPDATE producto_proveedores SET deleted_at=$1, updated_at=$1, sync_status='pending'
+       WHERE producto_id=$2 AND deleted_at IS NULL`,
+      [ts, productoId],
+    )
+    for (const v of vinculos) {
+      await this.db.execute(
+        `INSERT INTO producto_proveedores
+           (id, producto_id, proveedor_id, costo_centavos, created_at, updated_at, local_id, sync_status, deleted_at)
+         VALUES ($1,$2,$3,$4,$5,$5,$6,'pending',NULL)
+         ON CONFLICT(producto_id, proveedor_id) DO UPDATE SET
+           costo_centavos=excluded.costo_centavos, updated_at=excluded.updated_at,
+           deleted_at=NULL, sync_status='pending'`,
+        [crypto.randomUUID(), productoId, v.proveedor_id, v.costo_centavos, ts, lid],
+      )
+    }
+  }
+
+  async getReposicion(): Promise<FilaReposicion[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT p.*,
+              s.id as s_id, s.cantidad as s_cantidad, s.alerta_minimo as s_alerta,
+              s.created_at as s_created_at, s.updated_at as s_updated_at,
+              s.local_id as s_local_id, s.sync_status as s_sync_status, s.deleted_at as s_deleted_at,
+              pp.costo_centavos as pp_costo,
+              pv.id as prov_id, pv.nombre as prov_nombre, pv.telefono as prov_tel, pv.email as prov_email,
+              pv.notas as prov_notas, pv.activo as prov_activo, pv.created_at as prov_created,
+              pv.updated_at as prov_updated, pv.local_id as prov_local, pv.sync_status as prov_sync,
+              pv.deleted_at as prov_deleted
+       FROM stock s
+       JOIN productos p ON p.id = s.producto_id
+       JOIN producto_proveedores pp ON pp.producto_id = p.id AND pp.deleted_at IS NULL
+       JOIN proveedores pv ON pv.id = pp.proveedor_id AND pv.deleted_at IS NULL AND pv.activo = 1
+       WHERE s.cantidad <= s.alerta_minimo AND s.deleted_at IS NULL
+         AND p.activo = 1 AND p.deleted_at IS NULL
+       ORDER BY pv.nombre, p.descripcion`,
+    )
+    return rows.map(r => ({
+      producto: mapProducto(r),
+      stock: {
+        id: r.s_id as string,
+        producto_id: r.id as string,
+        cantidad: r.s_cantidad as number,
+        alerta_minimo: r.s_alerta as number,
+        created_at: r.s_created_at as string,
+        updated_at: r.s_updated_at as string,
+        local_id: r.s_local_id as string,
+        sync_status: r.s_sync_status as 'pending' | 'synced',
+        deleted_at: (r.s_deleted_at as string | null) ?? null,
+      },
+      proveedor: {
+        id: r.prov_id as string,
+        nombre: r.prov_nombre as string,
+        telefono: (r.prov_tel as string | null) ?? null,
+        email: (r.prov_email as string | null) ?? null,
+        notas: (r.prov_notas as string | null) ?? null,
+        activo: bool(r.prov_activo),
+        created_at: r.prov_created as string,
+        updated_at: r.prov_updated as string,
+        local_id: r.prov_local as string,
+        sync_status: r.prov_sync as 'pending' | 'synced',
+        deleted_at: (r.prov_deleted as string | null) ?? null,
+      },
+      costo_centavos: r.pp_costo as number,
+    }))
+  }
+
+  async incrementarStock(productoId: string, cantidad: number): Promise<void> {
+    const ts = now()
+    await this.db.execute(
+      `UPDATE stock SET cantidad = cantidad + $1, updated_at=$2, sync_status='pending'
+       WHERE producto_id=$3 AND deleted_at IS NULL`,
+      [cantidad, ts, productoId],
+    )
+  }
+
+  async crearPedido(pedido: Omit<Pedido, 'sync_status'>, items: Omit<PedidoItem, 'sync_status'>[]): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO pedidos
+         (id, proveedor_id, estado, total_centavos, recibido_at, created_at, updated_at, local_id, sync_status, deleted_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`,
+      [pedido.id, pedido.proveedor_id, pedido.estado, pedido.total_centavos, pedido.recibido_at,
+       pedido.created_at, pedido.updated_at, pedido.local_id, pedido.deleted_at],
+    )
+    for (const it of items) {
+      await this.db.execute(
+        `INSERT INTO pedido_items
+           (id, created_at, local_id, sync_status, pedido_id, producto_id, descripcion, cantidad, costo_unit_centavos, subtotal_centavos)
+         VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9)`,
+        [it.id, it.created_at, it.local_id, it.pedido_id, it.producto_id, it.descripcion,
+         it.cantidad, it.costo_unit_centavos, it.subtotal_centavos],
+      )
+    }
+  }
+
+  async getPedidos(): Promise<Pedido[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM pedidos WHERE deleted_at IS NULL ORDER BY created_at DESC`,
+    )
+    return rows.map(mapPedido)
+  }
+
+  async getPedidoItems(pedidoId: string): Promise<PedidoItem[]> {
+    const rows = await this.db.select<Row[]>(
+      `SELECT * FROM pedido_items WHERE pedido_id=$1 ORDER BY descripcion`,
+      [pedidoId],
+    )
+    return rows.map(mapPedidoItem)
+  }
+
+  async marcarPedidoRecibido(pedidoId: string): Promise<void> {
+    const cur = await this.db.select<Row[]>(`SELECT estado FROM pedidos WHERE id=$1`, [pedidoId])
+    if (!cur.length || cur[0].estado === 'recibido') return
+    const items = await this.getPedidoItems(pedidoId)
+    for (const it of items) await this.incrementarStock(it.producto_id, it.cantidad)
+    const ts = now()
+    await this.db.execute(
+      `UPDATE pedidos SET estado='recibido', recibido_at=$1, updated_at=$1, sync_status='pending' WHERE id=$2`,
+      [ts, pedidoId],
+    )
+  }
+
   // ── Config ─────────────────────────────────────────────────────────────────
 
   async getConfig(key: string): Promise<string | null> {
@@ -671,7 +855,7 @@ export class SqliteDataStore implements DataStore {
   // ── Sync ───────────────────────────────────────────────────────────────────
 
   async getPendientesSincronizacion(): Promise<Array<{ tabla: string; ids: string[] }>> {
-    const tablas = ['productos', 'stock', 'cajas', 'ventas', 'venta_items', 'movimientos_caja', 'categorias']
+    const tablas = ['productos', 'stock', 'cajas', 'ventas', 'venta_items', 'movimientos_caja', 'categorias', 'producto_proveedores', 'pedidos', 'pedido_items']
     const result: Array<{ tabla: string; ids: string[] }> = []
     for (const tabla of tablas) {
       const rows = await this.db.select<{ id: string }[]>(
@@ -680,6 +864,19 @@ export class SqliteDataStore implements DataStore {
       if (rows.length) result.push({ tabla, ids: rows.map(r => r.id) })
     }
     return result
+  }
+
+  /**
+   * IDs de cajas que conviene re-empujar siempre (idempotente en central): la(s)
+   * abierta(s). Garantiza que el turno actual exista allá aunque localmente ya figure
+   * 'synced' — las ventas no tienen FK a la caja en central y el turno podría faltar.
+   * No cuenta como "pendiente" para el indicador de sync.
+   */
+  async getCajasParaReempujar(): Promise<string[]> {
+    const rows = await this.db.select<{ id: string }[]>(
+      `SELECT id FROM cajas WHERE estado='abierta' AND deleted_at IS NULL`,
+    )
+    return rows.map(r => r.id)
   }
 
   async marcarSincronizado(tabla: string, ids: string[]): Promise<void> {

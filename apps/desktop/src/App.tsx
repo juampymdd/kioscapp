@@ -11,6 +11,7 @@ import ProveedoresScreen from './screens/ProveedoresScreen'
 import ReportesScreen from './screens/ReportesScreen'
 import VentasScreen from './screens/VentasScreen'
 import PromocionesScreen from './screens/PromocionesScreen'
+import ReposicionScreen from './screens/ReposicionScreen'
 import AyudaScreen from './screens/AyudaScreen'
 import Sidebar, { type ScreenId } from './components/Sidebar'
 import CerrarCaja from './screens/CerrarCaja'
@@ -115,6 +116,7 @@ export default function App() {
           {screen === 'categorias'  && <CategoriasScreen />}
           {screen === 'stock'       && <StockScreen />}
           {screen === 'proveedores' && <ProveedoresScreen />}
+          {screen === 'reposicion'  && <ReposicionScreen />}
           {screen === 'ventas'      && <VentasScreen />}
           {screen === 'promociones' && <PromocionesScreen />}
           {screen === 'reportes'    && <ReportesScreen />}

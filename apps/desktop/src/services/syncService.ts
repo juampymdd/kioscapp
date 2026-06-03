@@ -87,21 +87,33 @@ class SyncService {
     try {
       const store = getDataStore() as SqliteDataStore
       const pendientes = await store.getPendientesSincronizacion()
-      const totalPending = pendientes.reduce((s, t) => s + t.ids.length, 0)
       console.log('[sync] pendientes:', pendientes.map(p => `${p.tabla}(${p.ids.length})`).join(', ') || 'ninguno')
 
-      if (totalPending === 0) {
-        try { await this.pullDescuentos(store) } catch (e) { console.warn('[sync] pull descuentos falló:', e) }
-      try { await this.pullPrecios(store) } catch (e) { console.warn('[sync] pull precios falló:', e) }
-        this.setState({ status: 'ok', pendingCount: 0, lastSync: new Date(), lastError: null })
-        this.running = false
-        return
-      }
+      // Caja(s) abierta(s) a re-empujar siempre (idempotente; no cuenta como pendiente).
+      const reempujeCajas = await store.getCajasParaReempujar()
 
       const payload: Record<string, unknown> = { local_id: this.localId }
       for (const { tabla, ids } of pendientes) {
         const rows = await fetchRows(store, tabla, ids)
         if (rows.length) payload[tabla] = rows
+      }
+      // Asegurar que la caja abierta viaje aunque ya esté 'synced' localmente.
+      if (reempujeCajas.length) {
+        const yaIncluidas = new Set((payload.cajas as { id: string }[] | undefined)?.map(r => r.id) ?? [])
+        const faltan = reempujeCajas.filter(id => !yaIncluidas.has(id))
+        if (faltan.length) {
+          const extra = await fetchRows(store, 'cajas', faltan)
+          payload.cajas = [...((payload.cajas as unknown[]) ?? []), ...extra]
+        }
+      }
+
+      const hayQueEmpujar = Object.keys(payload).some(k => k !== 'local_id')
+      if (!hayQueEmpujar) {
+        try { await this.pullDescuentos(store) } catch (e) { console.warn('[sync] pull descuentos falló:', e) }
+        try { await this.pullPrecios(store) } catch (e) { console.warn('[sync] pull precios falló:', e) }
+        this.setState({ status: 'ok', pendingCount: 0, lastSync: new Date(), lastError: null })
+        this.running = false
+        return
       }
 
       console.log('[sync] POST', `${this.backendUrl}/api/sync/ingest`, '— tablas:', Object.keys(payload).filter(k => k !== 'local_id'))

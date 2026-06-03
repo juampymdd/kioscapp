@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, X, Save, Package } from 'lucide-react'
-import type { Producto, Categoria } from '@kioscapp/shared'
+import type { Producto, Categoria, Proveedor } from '@kioscapp/shared'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos, parseCentavos, centavosToInputStr } from '../lib/money'
 import ScreenHeader from '../components/ScreenHeader'
@@ -37,6 +37,9 @@ export default function ProductosScreen() {
   const [editando, setEditando] = useState<Producto | null>(null)
   const [precioStr, setPrecioStr] = useState('')
   const [guardando, setGuardando] = useState(false)
+  const [proveedores, setProveedores] = useState<Proveedor[]>([])
+  // proveedor_id -> costo (string editable). Las claves presentes = proveedores vinculados.
+  const [provSel, setProvSel] = useState<Record<string, string>>({})
 
   async function cargar() {
     try {
@@ -50,6 +53,7 @@ export default function ProductosScreen() {
   useEffect(() => {
     cargar()
     getDataStore().getCategorias().then(setCats)
+    getDataStore().getProveedores().then(setProveedores)
   }, [])
 
   const filtrados = productos.filter(p => {
@@ -58,15 +62,18 @@ export default function ProductosScreen() {
     return !q || p.descripcion.toLowerCase().includes(q) || (p.codigo_barras ?? '').includes(q)
   })
 
-  function seleccionar(p: Producto) {
+  async function seleccionar(p: Producto) {
     setEditando({ ...p })
     setPrecioStr(centavosToInputStr(p.precio_centavos))
+    const links = await getDataStore().getProveedoresDeProducto(p.id)
+    setProvSel(Object.fromEntries(links.map(l => [l.proveedor_id, centavosToInputStr(l.costo_centavos)])))
   }
 
   function nuevo() {
     const p = emptyProducto()
     setEditando(p)
     setPrecioStr('0,00')
+    setProvSel({})
   }
 
   async function guardar() {
@@ -80,6 +87,12 @@ export default function ProductosScreen() {
         sync_status: 'pending',
       }
       await getDataStore().upsertProducto(p)
+      await getDataStore().setProveedoresDeProducto(
+        p.id,
+        Object.entries(provSel).map(([proveedor_id, costoStr]) => ({
+          proveedor_id, costo_centavos: parseCentavos(costoStr),
+        })),
+      )
       await cargar()
       setEditando(null)
     } finally {
@@ -297,6 +310,49 @@ export default function ProductosScreen() {
                 />
                 Precio variable (se ingresa al vender)
               </label>
+            </div>
+
+            {/* Proveedores + costo */}
+            <div>
+              <label className="text-slate-400 text-xs block mb-2">Proveedores y costo</label>
+              {proveedores.length === 0 ? (
+                <p className="text-slate-600 text-xs">No hay proveedores. Cargalos en la pantalla Proveedores.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {proveedores.map(pv => {
+                    const sel = pv.id in provSel
+                    return (
+                      <div key={pv.id} className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-slate-300 text-sm cursor-pointer flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={sel}
+                            onChange={e => setProvSel(prev => {
+                              const next = { ...prev }
+                              if (e.target.checked) next[pv.id] = prev[pv.id] ?? '0,00'
+                              else delete next[pv.id]
+                              return next
+                            })}
+                          />
+                          <span className="truncate">{pv.nombre}</span>
+                        </label>
+                        {sel && (
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={provSel[pv.id]}
+                            onChange={e => setProvSel(prev => ({ ...prev, [pv.id]: e.target.value }))}
+                            placeholder="costo"
+                            className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1
+                                       text-white text-sm text-right font-mono
+                                       focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
 

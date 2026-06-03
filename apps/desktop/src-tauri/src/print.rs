@@ -214,6 +214,21 @@ pub fn build_escpos(datos: &DatosTicket, width: usize) -> Vec<u8> {
     b
 }
 
+/// Imprime texto plano (pedidos, etc.) por línea, con corte. `width` = columnas.
+pub fn build_texto(texto: &str, width: usize) -> Vec<u8> {
+    let mut b: Vec<u8> = Vec::new();
+    b.extend_from_slice(&[0x1B, 0x40]);        // init
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);  // left
+    for line in texto.split('\n') {
+        let l: String = ascii(line).chars().take(width).collect();
+        b.extend_from_slice(l.as_bytes());
+        b.push(0x0A);
+    }
+    b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x01]);  // partial cut
+    b
+}
+
 // ── Windows-only: list printers and raw print ──────────────────────────────
 
 #[cfg(target_os = "windows")]

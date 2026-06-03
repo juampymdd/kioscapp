@@ -218,4 +218,52 @@ export const migrations = [
       );
     `,
   },
+  {
+    description: 'Compras: vínculo producto-proveedor + pedidos — Fase 7',
+    sql: `
+      CREATE TABLE IF NOT EXISTS producto_proveedores (
+        id             TEXT PRIMARY KEY,
+        producto_id    TEXT NOT NULL,
+        proveedor_id   TEXT NOT NULL,
+        costo_centavos INTEGER NOT NULL DEFAULT 0,
+        created_at     TEXT NOT NULL DEFAULT '',
+        updated_at     TEXT NOT NULL DEFAULT '',
+        local_id       TEXT NOT NULL DEFAULT '',
+        sync_status    TEXT NOT NULL DEFAULT 'pending',
+        deleted_at     TEXT
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_prodprov_par ON producto_proveedores(producto_id, proveedor_id);
+      CREATE INDEX IF NOT EXISTS idx_prodprov_prod ON producto_proveedores(producto_id);
+      CREATE INDEX IF NOT EXISTS idx_prodprov_prov ON producto_proveedores(proveedor_id);
+
+      CREATE TABLE IF NOT EXISTS pedidos (
+        id             TEXT PRIMARY KEY,
+        proveedor_id   TEXT NOT NULL,
+        estado         TEXT NOT NULL DEFAULT 'pendiente',
+        total_centavos INTEGER NOT NULL DEFAULT 0,
+        recibido_at    TEXT,
+        created_at     TEXT NOT NULL DEFAULT '',
+        updated_at     TEXT NOT NULL DEFAULT '',
+        local_id       TEXT NOT NULL DEFAULT '',
+        sync_status    TEXT NOT NULL DEFAULT 'pending',
+        deleted_at     TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_pedidos_prov ON pedidos(proveedor_id);
+      CREATE INDEX IF NOT EXISTS idx_pedidos_estado ON pedidos(estado);
+
+      CREATE TABLE IF NOT EXISTS pedido_items (
+        id                  TEXT PRIMARY KEY,
+        created_at          TEXT NOT NULL,
+        local_id            TEXT NOT NULL,
+        sync_status         TEXT NOT NULL DEFAULT 'pending',
+        pedido_id           TEXT NOT NULL,
+        producto_id         TEXT NOT NULL,
+        descripcion         TEXT NOT NULL,
+        cantidad            REAL NOT NULL,
+        costo_unit_centavos INTEGER NOT NULL,
+        subtotal_centavos   INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_pedido_items_pedido ON pedido_items(pedido_id);
+    `,
+  },
 ]
