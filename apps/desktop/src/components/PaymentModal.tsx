@@ -8,6 +8,7 @@ import { useCartStore } from '../store/cartStore'
 import { useCajaStore } from '../store/cajaStore'
 import { getDataStore } from '../store/dataStore'
 import { formatCentavos } from '../lib/money'
+import { promoEtiqueta } from '@kioscapp/shared'
 
 interface Props {
   onClose: () => void
@@ -23,9 +24,10 @@ const MEDIOS: { id: MedioPago; label: string; Icon: LucideIcon }[] = [
 ]
 
 export default function PaymentModal({ onClose, onSuccess }: Props) {
-  const { items, total, descuento_centavos, clear, setDescuento, setMedioPago } = useCartStore()
+  const { items, total, subtotal, descuento_centavos, catalogo, clear, setDescuento, setMedioPago } = useCartStore()
   const { cajaActiva } = useCajaStore()
   const [medio, setMedio]           = useState<MedioPago>('efectivo')
+  const [mostrarDescuento, setMostrarDescuento] = useState(false)
   const [recibido, setRecibido]     = useState(0)
   const [procesando, setProcesando] = useState(false)
   const [error, setError]           = useState<string | null>(null)
@@ -50,6 +52,8 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
   }, [medio])
 
   const totalCentavos    = total()
+  // Descuento efectivo = lo que realmente baja del subtotal (clampa ≤ subtotal).
+  const descuentoTotal   = subtotal() - totalCentavos
   const vueltoCentavos   = medio === 'efectivo' ? Math.max(0, recibido - totalCentavos) : 0
   const puedeConfirmar   = medio !== 'efectivo' || recibido >= totalCentavos
 
@@ -62,6 +66,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
       const ts      = new Date().toISOString()
       const localId = (await store.getConfig('local_id')) ?? 'local-demo'
       const nombreComercio = (await store.getConfig('nombre_comercio')) ?? 'KioscApp'
+      const cats = await store.getCategorias()
       const ventaId = crypto.randomUUID()
 
       const venta: Omit<Venta, 'sync_status'> = {
@@ -116,7 +121,7 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         medio_pago:                 medio,
         monto_recibido_centavos:    medio === 'efectivo' ? recibido : totalCentavos,
         vuelto_centavos:            vueltoCentavos,
-        categorias:                 (await store.getCategorias()).map(c => ({ id: c.id, nombre: c.nombre, orden: c.orden })),
+        categorias:                 cats.map(c => ({ id: c.id, nombre: c.nombre, orden: c.orden })),
       }
 
       await store.crearVenta(venta)
@@ -126,17 +131,55 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
         await store.decrementarStock(item.producto.id, item.cantidad)
       }
 
+      // Contabilidad: la venta entra en BRUTO y el descuento como movimiento
+      // negativo aparte → el neto (bruto − descuento) coincide con lo cobrado.
+      const brutoCentavos = totalCentavos + descuentoTotal
       await store.registrarMovimientoCaja({
         id: crypto.randomUUID(),
         caja_id: cajaActiva.id,
         tipo: `venta_${medio === 'efectivo' ? 'efectivo' : medio.replace('_', '')}` as any,
-        monto_centavos: totalCentavos,
+        monto_centavos: brutoCentavos,
         descripcion: `Venta ${ventaId.slice(0, 8)}`,
         created_at: ts,
         updated_at: ts,
         local_id: localId,
         deleted_at: null,
       })
+
+      if (descuentoTotal > 0) {
+        // Armar descripción de qué descuentos se aplicaron (promo por id + manual).
+        const etiquetas = new Set<string>()
+        for (const i of items) {
+          if (i.descuento_centavos <= 0) continue
+          if (i.descuento_origen === 'manual') {
+            etiquetas.add(`Manual${i.descuento_detalle ? ' ' + i.descuento_detalle : ''}`)
+          } else if (i.descuento_origen === 'promo' && i.descuento_promo_id) {
+            const promo = catalogo.find(d => d.id === i.descuento_promo_id)
+            if (promo) {
+              const objNombre = promo.objetivo === 'producto'
+                ? i.producto.descripcion
+                : promo.objetivo === 'categoria'
+                  ? (cats.find(c => c.id === promo.categoria)?.nombre ?? promo.categoria ?? '')
+                  : ''
+              etiquetas.add(promoEtiqueta(promo, objNombre))
+            }
+          }
+        }
+        if (descuento_centavos > 0) etiquetas.add(`Manual venta ${formatCentavos(descuento_centavos)}`)
+        const detalleDesc = etiquetas.size ? [...etiquetas].join('; ') : 'sin detalle'
+
+        await store.registrarMovimientoCaja({
+          id: crypto.randomUUID(),
+          caja_id: cajaActiva.id,
+          tipo: 'descuento',
+          monto_centavos: -descuentoTotal,
+          descripcion: `Descuento (${detalleDesc}) · venta ${ventaId.slice(0, 8)}`,
+          created_at: ts,
+          updated_at: ts,
+          local_id: localId,
+          deleted_at: null,
+        })
+      }
 
       clear()
 
@@ -171,23 +214,56 @@ export default function PaymentModal({ onClose, onSuccess }: Props) {
           </button>
         </div>
 
-        {/* Total */}
-        <div className="bg-slate-800 rounded-xl p-4 mb-6 text-center">
-          <p className="text-slate-400 text-sm">Total a cobrar</p>
-          <p className="text-blue-400 text-4xl font-bold mt-1">
-            {formatCentavos(totalCentavos)}
-          </p>
+        {/* Total + desglose */}
+        <div className="bg-slate-800 rounded-xl p-4 mb-6">
+          {descuentoTotal > 0 && (
+            <div className="space-y-1 mb-3 pb-3 border-b border-slate-700">
+              <div className="flex justify-between text-slate-400 text-sm">
+                <span>Subtotal</span><span className="tabular-nums">{formatCentavos(subtotal())}</span>
+              </div>
+              <div className="flex justify-between text-amber-400 text-sm">
+                <span>Descuento</span>
+                <span className="tabular-nums">− {formatCentavos(descuentoTotal)}</span>
+              </div>
+            </div>
+          )}
+          <div className="text-center">
+            <p className="text-slate-400 text-sm">Total a cobrar</p>
+            <p className="text-blue-400 text-4xl font-bold mt-1 tabular-nums">
+              {formatCentavos(totalCentavos)}
+            </p>
+          </div>
         </div>
 
-        {/* Descuento global de la venta */}
+        {/* Descuento global de la venta (oculto tras un link para no meter ruido) */}
         <div className="mb-5">
-          <label className="text-slate-300 text-sm font-medium block mb-1">Descuento (toda la venta)</label>
-          <MoneyInput
-            centavos={descuento_centavos}
-            onChange={setDescuento}
-            className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white text-right
-                       focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          {!mostrarDescuento && descuento_centavos === 0 ? (
+            <button
+              onClick={() => setMostrarDescuento(true)}
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium cursor-pointer"
+            >
+              + Descuento a toda la venta
+            </button>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-slate-300 text-sm font-medium">Descuento (toda la venta)</label>
+                <button
+                  onClick={() => { setDescuento(0); setMostrarDescuento(false) }}
+                  className="text-slate-500 hover:text-slate-300 text-xs cursor-pointer"
+                >
+                  Quitar
+                </button>
+              </div>
+              <MoneyInput
+                centavos={descuento_centavos}
+                onChange={setDescuento}
+                autoFocus
+                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white text-right
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </>
+          )}
         </div>
 
         {/* Medio de pago */}

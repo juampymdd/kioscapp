@@ -122,6 +122,13 @@ export function buildLineas(d: DatosTicket, ancho: AnchoPapel = '58'): LineaTick
     }
   }
 
+  // Ahorro total = descuentos por ítem + descuento global de la venta.
+  const ahorro = d.items.reduce((s, i) => s + (i.descuento_centavos || 0), 0) + d.descuento_centavos
+  if (ahorro > 0) {
+    lines.push({ tipo: 'sep', char: '-' })
+    lines.push({ tipo: 'texto', texto: center(`Ahorraste ${pesos(ahorro)}`, W), negrita: true, centrado: true })
+  }
+
   lines.push({ tipo: 'sep', char: '=' })
   lines.push({ tipo: 'texto', texto: center('Gracias por su compra!', W), centrado: true })
 

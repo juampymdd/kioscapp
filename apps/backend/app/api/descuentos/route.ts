@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   let body: {
     sucursal_id?: string | null
-    objetivo?: 'producto' | 'categoria'
+    objetivo?: 'producto' | 'categoria' | 'todos'
     producto_id?: string | null
     categoria?: string | null
     tipo?: 'monto' | 'porcentaje'
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'JSON inválido' }, { status: 400 }) }
 
-  if (body.objetivo !== 'producto' && body.objetivo !== 'categoria')
+  if (body.objetivo !== 'producto' && body.objetivo !== 'categoria' && body.objetivo !== 'todos')
     return NextResponse.json({ error: 'objetivo inválido' }, { status: 400 })
   if (body.tipo !== 'monto' && body.tipo !== 'porcentaje')
     return NextResponse.json({ error: 'tipo inválido' }, { status: 400 })

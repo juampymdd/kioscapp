@@ -1,6 +1,6 @@
 import type { CategoriaProducto } from './producto'
 
-export type ObjetivoDescuento = 'producto' | 'categoria'
+export type ObjetivoDescuento = 'producto' | 'categoria' | 'todos'
 export type TipoDescuento = 'monto' | 'porcentaje'
 
 /**

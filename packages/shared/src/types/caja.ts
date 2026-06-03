@@ -9,6 +9,7 @@ export type TipoMovimiento =
   | 'venta_qr'
   | 'ingreso_manual'
   | 'egreso_manual'
+  | 'descuento'
   | 'apertura'
   | 'cierre'
 

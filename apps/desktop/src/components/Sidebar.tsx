@@ -15,14 +15,13 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'pos',         Icon: ShoppingCart, label: 'Ventas POS'  },
+  { id: 'ventas',      Icon: Receipt,      label: 'Mis ventas'  },
   { id: 'productos',   Icon: Package,      label: 'Productos'   },
   { id: 'categorias',  Icon: Tags,         label: 'Categorías'  },
   { id: 'stock',       Icon: Boxes,        label: 'Stock'       },
   { id: 'proveedores', Icon: Truck,        label: 'Proveedores' },
-  { id: 'ventas',      Icon: Receipt,      label: 'Mis ventas'  },
   { id: 'promociones', Icon: Tag,          label: 'Promociones' },
   { id: 'reportes',    Icon: BarChart2,    label: 'Reportes'    },
-  { id: 'ayuda',       Icon: HelpCircle,   label: 'Ayuda'       },
 ]
 
 interface Props {
@@ -78,6 +77,22 @@ export default function Sidebar({ currentScreen, onNavigate, cajaActiva, onCerra
             </span>
           </div>
         )}
+        <button
+          title="Ayuda"
+          onClick={() => onNavigate('ayuda')}
+          className={`group relative flex items-center justify-center w-full h-10 rounded-lg
+                     transition-colors cursor-pointer
+                     ${currentScreen === 'ayuda'
+                       ? 'bg-blue-600 text-white'
+                       : 'text-slate-500 hover:bg-slate-800 hover:text-white'}`}
+        >
+          <HelpCircle size={18} />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-700 text-white text-xs
+                           rounded whitespace-nowrap opacity-0 group-hover:opacity-100
+                           pointer-events-none transition-opacity z-50">
+            Ayuda
+          </span>
+        </button>
         <button
           title="Configuración"
           onClick={onConfig}

@@ -188,6 +188,17 @@ pub fn build_escpos(datos: &DatosTicket, width: usize) -> Vec<u8> {
         }
     }
 
+    // Ahorro total = descuentos por item + descuento global.
+    let ahorro: i64 = datos.items.iter().map(|i| i.descuento_centavos).sum::<i64>() + datos.descuento_centavos;
+    if ahorro > 0 {
+        b.extend_from_slice("-".repeat(width).as_bytes());
+        b.push(0x0A);
+        b.extend_from_slice(&[0x1B, 0x61, 0x01, 0x1B, 0x45, 0x01]); // center + bold
+        b.extend_from_slice(ascii(&format!("Ahorraste {}", pesos(ahorro))).as_bytes());
+        b.push(0x0A);
+        b.extend_from_slice(&[0x1B, 0x45, 0x00, 0x1B, 0x61, 0x00]); // bold off + left
+    }
+
     b.extend_from_slice("=".repeat(width).as_bytes());
     b.push(0x0A);
 

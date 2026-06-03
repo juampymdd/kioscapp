@@ -111,6 +111,7 @@ async function pullCatalogo(since?: string): Promise<void> {
     productos: unknown[]
     stock: unknown[]
     categorias?: unknown[]
+    proveedores?: unknown[]
     generado_at: string
   }
 
@@ -126,6 +127,10 @@ async function pullCatalogo(since?: string): Promise<void> {
   }
   for (const p of data.productos) {
     await store.upsertProducto(p as any)
+  }
+  for (const pr of data.proveedores ?? []) {
+    const row = pr as any
+    await store.upsertProveedor({ ...row, activo: row.activo === true || row.activo === 1, sync_status: 'synced' })
   }
   // Stock se actualiza mediante upsert directo
   for (const s of data.stock) {

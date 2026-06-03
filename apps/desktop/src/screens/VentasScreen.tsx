@@ -321,13 +321,44 @@ export default function VentasScreen() {
                             <tbody className="divide-y divide-slate-700/40">
                               {itemsMap[v.id].map(it => (
                                 <tr key={it.id}>
-                                  <td className="py-1.5 text-slate-300">{it.descripcion}</td>
+                                  <td className="py-1.5 text-slate-300">
+                                    {it.descripcion}
+                                    {it.descuento_centavos > 0 && (
+                                      <span className="ml-2 text-[11px] text-amber-400">
+                                        {it.descuento_origen === 'promo' ? 'Promo' : 'Desc.'}
+                                        {it.descuento_detalle ? ` ${it.descuento_detalle}` : ''} − {formatCentavos(it.descuento_centavos)}
+                                      </span>
+                                    )}
+                                  </td>
                                   <td className="py-1.5 text-right text-slate-400">{fmtCant(it.cantidad)}</td>
                                   <td className="py-1.5 text-right text-slate-400 font-mono">{formatCentavos(it.precio_unit_centavos)}</td>
                                   <td className="py-1.5 text-right text-white font-mono">{formatCentavos(it.subtotal_centavos)}</td>
                                 </tr>
                               ))}
                             </tbody>
+                            {(() => {
+                              const its = itemsMap[v.id]
+                              const bruto = its.reduce((s, it) => s + it.subtotal_centavos, 0)
+                              const descItems = its.reduce((s, it) => s + (it.descuento_centavos ?? 0), 0)
+                              const descTotal = descItems + v.descuento_centavos
+                              if (descTotal <= 0) return null
+                              return (
+                                <tfoot className="border-t border-slate-700">
+                                  <tr>
+                                    <td colSpan={3} className="pt-2 text-right text-slate-500">Subtotal</td>
+                                    <td className="pt-2 text-right text-slate-400 font-mono">{formatCentavos(bruto)}</td>
+                                  </tr>
+                                  <tr>
+                                    <td colSpan={3} className="text-right text-amber-400">Descuento</td>
+                                    <td className="text-right text-amber-400 font-mono">− {formatCentavos(descTotal)}</td>
+                                  </tr>
+                                  <tr>
+                                    <td colSpan={3} className="text-right text-white font-semibold">Total</td>
+                                    <td className="text-right text-white font-mono font-semibold">{formatCentavos(v.total_centavos)}</td>
+                                  </tr>
+                                </tfoot>
+                              )
+                            })()}
                           </table>
                         )}
                         <div className="flex items-center justify-between mt-2">

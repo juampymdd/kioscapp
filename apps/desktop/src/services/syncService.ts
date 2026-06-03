@@ -239,7 +239,7 @@ class SyncService {
   async pullDescuentos(store: SqliteDataStore): Promise<number> {
     if (!this.backendUrl || !this.syncSecret || this.localId === 'local-demo') return 0
 
-    // Primero subir las locales pendientes, así vuelven en el pull ya como central.
+    // Primero subir las locales pendientes al central.
     await this.pushDescuentos(store)
 
     const res = await fetch(`${this.backendUrl}/api/puntos-venta/${this.localId}/descuentos`, {
@@ -254,7 +254,11 @@ class SyncService {
 
     if (data.sucursal_id) await store.setConfig('sucursal_id', data.sucursal_id)
 
+    // No pisar las promos creadas en esta caja: siguen 'local' (editables/borrables acá).
+    // Las demás (de la web u otra caja) se guardan como 'central'.
+    const locales = new Set(await store.getIdsDescuentosLocales())
     for (const d of data.descuentos) {
+      if (locales.has(d.id)) continue
       await store.upsertDescuento({ ...d, origen: 'central', sync_status: 'synced' })
     }
     await store.reconciliarDescuentosCentral(data.descuentos.map(d => d.id))

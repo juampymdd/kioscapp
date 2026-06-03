@@ -156,7 +156,7 @@ export const descuentos = pgTable('descuentos', {
   ...syncFields,
   user_id:     text('user_id').notNull().references(() => users.id),
   sucursal_id: text('sucursal_id').references(() => sucursales.id),
-  objetivo:    text('objetivo', { enum: ['producto', 'categoria'] }).notNull(),
+  objetivo:    text('objetivo', { enum: ['producto', 'categoria', 'todos'] }).notNull(),
   producto_id: text('producto_id'),
   categoria:   text('categoria'),
   tipo:        text('tipo', { enum: ['monto', 'porcentaje'] }).notNull(),

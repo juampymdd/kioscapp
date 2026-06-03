@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   let body: {
     id?: string
-    objetivo?: 'producto' | 'categoria'
+    objetivo?: 'producto' | 'categoria' | 'todos'
     producto_id?: string | null
     categoria?: string | null
     tipo?: 'monto' | 'porcentaje'
@@ -52,11 +52,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     activo?: boolean
     deleted_at?: string | null
     created_at?: string
+    dias_semana?: string | null
+    vigencia_desde?: string | null
+    vigencia_hasta?: string | null
+    hora_desde?: number | null
+    hora_hasta?: number | null
+    medio_pago?: string | null
   }
   try { body = await req.json() } catch { return withCors(NextResponse.json({ error: 'JSON inválido' }, { status: 400 })) }
 
   if (!body.id) return withCors(NextResponse.json({ error: 'id requerido' }, { status: 400 }))
-  if (body.objetivo !== 'producto' && body.objetivo !== 'categoria')
+  if (body.objetivo !== 'producto' && body.objetivo !== 'categoria' && body.objetivo !== 'todos')
     return withCors(NextResponse.json({ error: 'objetivo inválido' }, { status: 400 }))
   if (body.tipo !== 'monto' && body.tipo !== 'porcentaje')
     return withCors(NextResponse.json({ error: 'tipo inválido' }, { status: 400 }))
@@ -77,6 +83,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     tipo:        body.tipo,
     valor:       body.valor,
     activo:      body.activo ?? true,
+    dias_semana:    body.dias_semana ?? null,
+    vigencia_desde: body.vigencia_desde ?? null,
+    vigencia_hasta: body.vigencia_hasta ?? null,
+    hora_desde:     body.hora_desde ?? null,
+    hora_hasta:     body.hora_hasta ?? null,
+    medio_pago:     body.medio_pago ?? null,
     sync_status: 'synced',
     created_at:  body.created_at ?? now,
     updated_at:  now,
@@ -86,6 +98,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     set: {
       valor:      body.valor,
       activo:     body.activo ?? true,
+      dias_semana:    body.dias_semana ?? null,
+      vigencia_desde: body.vigencia_desde ?? null,
+      vigencia_hasta: body.vigencia_hasta ?? null,
+      hora_desde:     body.hora_desde ?? null,
+      hora_hasta:     body.hora_hasta ?? null,
+      medio_pago:     body.medio_pago ?? null,
       deleted_at: body.deleted_at ?? null,
       updated_at: now,
     },

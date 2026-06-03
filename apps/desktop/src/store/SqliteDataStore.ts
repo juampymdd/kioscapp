@@ -557,6 +557,14 @@ export class SqliteDataStore implements DataStore {
     return rows.map(mapDescuento)
   }
 
+  /** Ids de promos creadas en esta caja (origen='local'). El pull no debe pisarlas. */
+  async getIdsDescuentosLocales(): Promise<string[]> {
+    const rows = await this.db.select<{ id: string }[]>(
+      `SELECT id FROM descuentos WHERE origen='local'`,
+    )
+    return rows.map(r => r.id)
+  }
+
   /** Promos locales pendientes de subir al central. */
   async getDescuentosPendientes(): Promise<Descuento[]> {
     const rows = await this.db.select<Row[]>(

@@ -17,6 +17,8 @@ export interface DescuentoResuelto {
   origen: OrigenDescuento | null
   /** Detalle legible del tipo (ej '10%'); null si es monto fijo. */
   detalle: string | null
+  /** Id de la promo de catálogo aplicada (para asentar/auditar). null si manual o sin descuento. */
+  promoId: string | null
 }
 
 /** Etiqueta del tipo de descuento: '10%' para porcentaje, null para monto fijo. */
@@ -69,6 +71,7 @@ export function calcularDescuento(d: Descuento, subtotal_centavos: number): numb
 }
 
 function matchea(d: Descuento, item: DescuentoItemInput): boolean {
+  if (d.objetivo === 'todos') return true
   if (d.objetivo === 'producto') return d.producto_id === item.producto_id
   return d.categoria === item.categoria
 }
@@ -114,7 +117,7 @@ export function promoVigente(d: Descuento, ctx: DescuentoCtx): boolean {
 /** Rank de prioridad de catálogo: sucursal(2) sobre global(1); producto(2) sobre categoría(1). */
 function rank(d: Descuento): number {
   const scope    = d.sucursal_id !== null ? 2 : 1
-  const objetivo = d.objetivo === 'producto' ? 2 : 1
+  const objetivo = d.objetivo === 'producto' ? 3 : d.objetivo === 'categoria' ? 2 : 1
   return scope * 10 + objetivo
 }
 
@@ -139,12 +142,21 @@ export function resolverDescuento(
       centavos: calcularDescuento(promo, item.subtotal_centavos),
       origen: 'promo',
       detalle: detalleDescuento(promo),
+      promoId: promo.id,
     }
   }
 
   if (manual_centavos !== null) {
-    return { centavos: Math.max(0, Math.min(manual_centavos, item.subtotal_centavos)), origen: 'manual', detalle: null }
+    return { centavos: Math.max(0, Math.min(manual_centavos, item.subtotal_centavos)), origen: 'manual', detalle: null, promoId: null }
   }
 
-  return { centavos: 0, origen: null, detalle: null }
+  return { centavos: 0, origen: null, detalle: null, promoId: null }
+}
+
+/** Etiqueta humana de una promo (sin nombres de producto/categoría, que viven en el desktop). */
+export function promoEtiqueta(d: Descuento, objetivoNombre: string): string {
+  const tipo = detalleDescuento(d) ?? `$${(d.valor / 100).toFixed(2)}`
+  const cond = condicionesTexto(d)
+  const base = d.objetivo === 'todos' ? `${tipo} toda la venta` : `${tipo} ${objetivoNombre}`
+  return cond ? `${base} (${cond})` : base
 }

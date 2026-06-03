@@ -20,6 +20,8 @@ export interface CartItem {
   descuento_origen: OrigenDescuento | null
   /** Detalle del tipo efectivo (ej '10%'); null si monto fijo o sin descuento. */
   descuento_detalle: string | null
+  /** Id de la promo aplicada (para asentar el movimiento). null si manual/sin descuento. */
+  descuento_promo_id: string | null
 }
 
 interface CartStore {
@@ -47,7 +49,7 @@ function recalcItem(item: CartItem, catalogo: Descuento[], medio: string | null)
   item = { ...item, cantidad }
   const precio_unit_centavos = item.precioOverride_centavos ?? item.producto.precio_centavos
   const subtotal_centavos = Math.floor(cantidad * precio_unit_centavos)
-  const { centavos, origen, detalle } = resolverDescuento(
+  const { centavos, origen, detalle, promoId } = resolverDescuento(
     { producto_id: item.producto.id, categoria: item.producto.categoria, subtotal_centavos },
     item.descuentoManual_centavos,
     catalogo,
@@ -55,7 +57,7 @@ function recalcItem(item: CartItem, catalogo: Descuento[], medio: string | null)
   )
   // El detalle del manual lo aporta el carrito (resolver no conoce el modo %/$).
   const descuento_detalle = origen === 'manual' ? item.descuentoManual_detalle : detalle
-  return { ...item, precio_unit_centavos, subtotal_centavos, descuento_centavos: centavos, descuento_origen: origen, descuento_detalle }
+  return { ...item, precio_unit_centavos, subtotal_centavos, descuento_centavos: centavos, descuento_origen: origen, descuento_detalle, descuento_promo_id: promoId }
 }
 
 /** ¿El ítem tiene una promo de catálogo aplicada? (manual queda bloqueado) */
@@ -78,7 +80,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
         precioOverride_centavos: precioUnit ?? null,
         subtotal_centavos: 0,
         descuentoManual_centavos: null, descuentoManual_detalle: null,
-        descuento_centavos: 0, descuento_origen: null, descuento_detalle: null,
+        descuento_centavos: 0, descuento_origen: null, descuento_detalle: null, descuento_promo_id: null,
       }
 
       // Precio variable (monto tipeado al vender): línea única, cantidad 1.
