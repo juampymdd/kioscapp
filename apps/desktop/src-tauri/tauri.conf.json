@@ -37,7 +37,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "REEMPLAZAR_CON_CLAVE_PUBLICA",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNBQjBDMUI1MDdBNjA5QjEKUldTeENhWUh0Y0d3T3VtWXZ6U0lUTkMyN1lPZmpLdFZ5ZitMcWs3YkxhLy9BSWNLemtxb2FpWTYK",
       "endpoints": [
         "https://github.com/juampymdd/kioscapp/releases/latest/download/latest.json"
       ]
