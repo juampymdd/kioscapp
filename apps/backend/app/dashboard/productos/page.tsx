@@ -26,6 +26,7 @@ export default function ProductosPage() {
   const [cargando, setCargando] = useState(true)
   const [q, setQ] = useState('')
   const [edit, setEdit] = useState<Form | null>(null)
+  const [pagina, setPagina] = useState(1)
   const [sucs, setSucs] = useState<{ id: string; nombre: string }[]>([])
   // Overrides de precio por sucursal del producto en edición: { sucId: 'precio en pesos' }
   const [precios, setPrecios] = useState<Record<string, string>>({})
@@ -82,6 +83,11 @@ export default function ProductosPage() {
   const catNombre = (id: string) => cats.find(c => c.id === id)?.nombre ?? id
   const filtrados = items.filter(p => !q || p.descripcion.toLowerCase().includes(q.toLowerCase()) || (p.codigo_barras ?? '').includes(q))
 
+  const POR_PAGINA = 15
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
+  const paginaActual = Math.min(pagina, totalPaginas)
+  const visibles = filtrados.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA)
+
   const inputCls = 'mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
   return (
@@ -94,36 +100,57 @@ export default function ProductosPage() {
         }
       />
 
-      <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por nombre o código…"
+      <input value={q} onChange={e => { setQ(e.target.value); setPagina(1) }} placeholder="Buscar por nombre o código…"
         className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-50 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="text-slate-500 text-xs uppercase tracking-wide border-b border-slate-800 text-left">
             <tr>
-              <th className="px-4 py-2.5">Descripción</th><th>Categoría</th>
-              <th className="text-right">Precio</th><th className="text-right">Stock</th>
-              <th>Código</th><th>Estado</th><th></th>
+              <th className="px-4 py-3 font-medium">Descripción</th>
+              <th className="px-4 py-3 font-medium">Categoría</th>
+              <th className="px-4 py-3 font-medium text-right">Precio</th>
+              <th className="px-4 py-3 font-medium text-right">Stock</th>
+              <th className="px-4 py-3 font-medium">Código</th>
+              <th className="px-4 py-3 font-medium">Estado</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {cargando && Array.from({ length: 6 }).map((_, i) => (
-              <tr key={i}><td className="px-4 py-3" colSpan={7}><Skeleton className="h-4 w-full" /></td></tr>
+            {cargando && Array.from({ length: 8 }).map((_, i) => (
+              <tr key={i}><td className="px-4 py-3" colSpan={6}><Skeleton className="h-4 w-full" /></td></tr>
             ))}
-            {!cargando && filtrados.map(p => (
-              <tr key={p.id} onClick={() => editar(p)} className={`cursor-pointer hover:bg-slate-800/50 ${p.activo ? '' : 'opacity-50'}`}>
+            {!cargando && visibles.map(p => (
+              <tr key={p.id} onClick={() => editar(p)} className={`cursor-pointer hover:bg-slate-800/50 transition-colors ${p.activo ? '' : 'opacity-50'}`}>
                 <td className="px-4 py-2.5 font-medium">{p.descripcion}</td>
-                <td className="text-slate-400">{catNombre(p.categoria)}</td>
-                <td className="text-right text-blue-400 tabular-nums">{p.precio_variable ? 'Variable' : pesos(p.precio_centavos)}</td>
-                <td className="text-right text-slate-300 tabular-nums">{p.cantidad}</td>
-                <td className="text-slate-500 text-xs">{p.codigo_barras ?? '—'}</td>
-                <td><span className={`text-xs px-2 py-0.5 rounded-full ${p.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>{p.activo ? 'Activo' : 'Inactivo'}</span></td>
-                <td></td>
+                <td className="px-4 py-2.5 text-slate-400">{catNombre(p.categoria)}</td>
+                <td className="px-4 py-2.5 text-right text-blue-400 tabular-nums whitespace-nowrap">{p.precio_variable ? 'Variable' : pesos(p.precio_centavos)}</td>
+                <td className="px-4 py-2.5 text-right text-slate-300 tabular-nums">{p.cantidad}</td>
+                <td className="px-4 py-2.5 text-slate-500 text-xs font-mono whitespace-nowrap">{p.codigo_barras ?? '—'}</td>
+                <td className="px-4 py-2.5"><span className={`text-xs px-2 py-0.5 rounded-full ${p.activo ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>{p.activo ? 'Activo' : 'Inactivo'}</span></td>
               </tr>
             ))}
-            {!cargando && filtrados.length === 0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Sin productos</td></tr>}
+            {!cargando && filtrados.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Sin productos</td></tr>}
           </tbody>
         </table>
+
+        {!cargando && filtrados.length > 0 && (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-slate-800 text-sm">
+            <span className="text-slate-500 text-xs">
+              {(paginaActual - 1) * POR_PAGINA + 1}–{Math.min(paginaActual * POR_PAGINA, filtrados.length)} de {filtrados.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaActual <= 1}
+                className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                Anterior
+              </button>
+              <span className="px-3 text-slate-400 tabular-nums">{paginaActual} / {totalPaginas}</span>
+              <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual >= totalPaginas}
+                className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {edit && (

@@ -78,9 +78,18 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.cajas?.length) {
-      await db.insert(cajas)
-        .values(body.cajas.map(c => ({ ...c, sync_status: 'synced' as const })))
-        .onConflictDoNothing()
+      for (const c of body.cajas) {
+        await db.insert(cajas)
+          .values({ ...c, sync_status: 'synced' as const })
+          .onConflictDoUpdate({
+            target: cajas.id,
+            set: {
+              local_id: c.local_id, estado: c.estado,
+              cierre_at: c.cierre_at ?? null, monto_cierre_centavos: c.monto_cierre_centavos ?? null,
+              updated_at: c.updated_at, deleted_at: c.deleted_at ?? null,
+            },
+          })
+      }
       ingested.cajas = body.cajas.length
     }
 
@@ -120,7 +129,7 @@ export async function POST(req: NextRequest) {
             .values({ ...s, sync_status: 'synced' as const })
             .onConflictDoUpdate({
               target: stock.id,
-              set: { cantidad: s.cantidad, alerta_minimo: s.alerta_minimo, updated_at: s.updated_at, deleted_at: s.deleted_at ?? null },
+              set: { local_id: s.local_id, cantidad: s.cantidad, alerta_minimo: s.alerta_minimo, updated_at: s.updated_at, deleted_at: s.deleted_at ?? null },
             })
           ok++
         } catch (e) {
