@@ -50,6 +50,14 @@ class SyncService {
       return
     }
 
+    // Corregir datos sembrados con 'local-demo' al punto de venta real (una vez).
+    if (this.localId && this.localId !== 'local-demo') {
+      try {
+        const n = await (store as SqliteDataStore).normalizarLocalIdSeed(this.localId)
+        if (n) console.log(`[sync] normalizadas ${n} filas local-demo → ${this.localId}`)
+      } catch (e) { console.warn('[sync] normalizar local_id falló:', e) }
+    }
+
     window.addEventListener('online',  () => this.sync())
     window.addEventListener('offline', () => this.setState({ status: 'offline' }))
 

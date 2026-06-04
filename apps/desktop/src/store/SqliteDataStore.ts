@@ -889,6 +889,26 @@ export class SqliteDataStore implements DataStore {
     return rows.map(r => r.id)
   }
 
+  /**
+   * Corrige datos sembrados con local_id 'local-demo' al punto de venta real configurado.
+   * La web scopea cajas/stock por local_id = puntos_venta.id; sin esto, los datos del seed
+   * quedan invisibles en el dashboard. Marca pending para que el sync los re-empuje corregidos.
+   * Idempotente: si ya no hay filas 'local-demo', no hace nada.
+   */
+  async normalizarLocalIdSeed(realId: string): Promise<number> {
+    if (!realId || realId === 'local-demo') return 0
+    const tablas = ['cajas', 'stock', 'ventas', 'venta_items', 'movimientos_caja']
+    let total = 0
+    for (const t of tablas) {
+      const res = await this.db.execute(
+        `UPDATE ${t} SET local_id=$1, sync_status='pending' WHERE local_id='local-demo'`,
+        [realId],
+      )
+      total += (res as { rowsAffected?: number }).rowsAffected ?? 0
+    }
+    return total
+  }
+
   async marcarSincronizado(tabla: string, ids: string[]): Promise<void> {
     if (!ids.length) return
     const placeholders = ids.map((_, i) => `$${i + 1}`).join(',')

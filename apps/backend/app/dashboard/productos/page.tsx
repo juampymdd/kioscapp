@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Package } from 'lucide-react'
 import PageHeader from '../_components/PageHeader'
 import Skeleton from '../_components/Skeleton'
+import { ScrollArea } from '../_components/ui/scroll-area'
 import { useConfirm } from '../_components/confirm'
 
 type Producto = {
@@ -104,9 +105,10 @@ export default function ProductosPage() {
         className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-50 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <ScrollArea className="max-h-[60vh]">
         <table className="w-full text-sm">
-          <thead className="text-slate-500 text-xs uppercase tracking-wide border-b border-slate-800 text-left">
-            <tr>
+          <thead className="text-slate-500 text-xs uppercase tracking-wide text-left sticky top-0 bg-slate-900 z-10">
+            <tr className="border-b border-slate-800">
               <th className="px-4 py-3 font-medium">Descripción</th>
               <th className="px-4 py-3 font-medium">Categoría</th>
               <th className="px-4 py-3 font-medium text-right">Precio</th>
@@ -132,6 +134,7 @@ export default function ProductosPage() {
             {!cargando && filtrados.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Sin productos</td></tr>}
           </tbody>
         </table>
+        </ScrollArea>
 
         {!cargando && filtrados.length > 0 && (
           <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-slate-800 text-sm">

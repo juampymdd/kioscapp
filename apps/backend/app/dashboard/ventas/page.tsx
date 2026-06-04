@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Receipt, ChevronRight, ChevronDown } from 'lucide-react'
 import PageHeader from '../_components/PageHeader'
 import Skeleton from '../_components/Skeleton'
+import { ScrollArea } from '../_components/ui/scroll-area'
 
 type Venta = {
   id: string; created_at: string; medio_pago: string; total_centavos: number
@@ -89,7 +90,7 @@ export default function VentasAdminPage() {
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="max-h-[62vh] overflow-y-auto">
+        <ScrollArea className="max-h-[62vh]">
         <table className="w-full text-sm">
           <thead className="text-slate-500 text-xs uppercase tracking-wide text-left sticky top-0 bg-slate-900 z-10">
             <tr className="border-b border-slate-800">
@@ -144,7 +145,7 @@ export default function VentasAdminPage() {
             {!cargando && items.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Sin ventas en el período</td></tr>}
           </tbody>
         </table>
-        </div>
+        </ScrollArea>
 
         {!cargando && totalPaginas > 1 && (
           <div className="flex items-center justify-between border-t border-slate-800 px-4 py-3">
