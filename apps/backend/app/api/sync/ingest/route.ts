@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/src/db'
-import { ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta, categorias, stock, producto_proveedores, pedidos, pedido_items } from '@/src/db/schema'
+import { productos, ventas, venta_items, cajas, movimientos_caja, proveedores, puntos_venta, categorias, stock, producto_proveedores, pedidos, pedido_items } from '@/src/db/schema'
 import { optionsResponse, withCors } from '@/src/lib/cors'
 import { and, eq } from 'drizzle-orm'
 
 type IngestPayload = {
   local_id: string
+  productos?: (typeof productos.$inferInsert)[]
   ventas?: (typeof ventas.$inferInsert)[]
   venta_items?: (typeof venta_items.$inferInsert)[]
   cajas?: (typeof cajas.$inferInsert)[]
@@ -57,6 +58,25 @@ export async function POST(req: NextRequest) {
   const ingested: Record<string, number> = {}
 
   try {
+    // Productos primero: stock y otros referencian productos.id.
+    if (body.productos?.length) {
+      for (const p of body.productos) {
+        await db.insert(productos)
+          .values({ ...p, sync_status: 'synced' as const })
+          .onConflictDoUpdate({
+            target: productos.id,
+            set: {
+              codigo_barras: p.codigo_barras ?? null, descripcion: p.descripcion,
+              categoria: p.categoria, precio_centavos: p.precio_centavos,
+              fraccionable: p.fraccionable, precio_variable: p.precio_variable,
+              unidad_medida: p.unidad_medida, activo: p.activo,
+              updated_at: p.updated_at, deleted_at: p.deleted_at ?? null,
+            },
+          })
+      }
+      ingested.productos = body.productos.length
+    }
+
     if (body.cajas?.length) {
       await db.insert(cajas)
         .values(body.cajas.map(c => ({ ...c, sync_status: 'synced' as const })))

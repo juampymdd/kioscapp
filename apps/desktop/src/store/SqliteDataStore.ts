@@ -243,6 +243,15 @@ export class SqliteDataStore implements DataStore {
         throw e
       }
     }
+
+    // One-shot: re-encolar productos/categorías que quedaron 'synced' sin haber
+    // llegado al central (el ingest no tenía bloque productos). Guard por config.
+    const requeued = await this.getConfig('requeue_catalogo_v1')
+    if (!requeued) {
+      await this.db.execute(`UPDATE productos SET sync_status='pending'`)
+      await this.db.execute(`UPDATE categorias SET sync_status='pending'`)
+      await this.setConfig('requeue_catalogo_v1', '1')
+    }
   }
 
   // ── Productos ──────────────────────────────────────────────────────────────
