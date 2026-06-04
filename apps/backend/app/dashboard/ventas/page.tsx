@@ -14,6 +14,7 @@ type Item = {
 }
 type Sucursal = { id: string; nombre: string }
 
+const PAGE_SIZE = 20
 const pesos = (c: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format((c ?? 0) / 100)
 const MEDIO: Record<string, string> = { efectivo: 'Efectivo', debito: 'Débito', credito: 'Crédito', qr_mercado_pago: 'QR / MP', cuenta_corriente: 'Cta. cte.' }
 const fechaHora = (iso: string) => new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -35,6 +36,7 @@ export default function VentasAdminPage() {
   const [medio, setMedio] = useState('')
   const [exp, setExp] = useState<string | null>(null)
   const [itemsMap, setItemsMap] = useState<Record<string, Item[]>>({})
+  const [page, setPage] = useState(1)
 
   async function cargar() {
     setCargando(true)
@@ -44,7 +46,7 @@ export default function VentasAdminPage() {
       if (sucursal) qs.set('sucursal', sucursal)
       if (medio) qs.set('medio', medio)
       if (desde) qs.set('desde', desde)
-      const r = await fetch(`/api/ventas?${qs}`); setItems(await r.json()); setExp(null)
+      const r = await fetch(`/api/ventas?${qs}`); setItems(await r.json()); setExp(null); setPage(1)
     } finally { setCargando(false) }
   }
   useEffect(() => { fetch('/api/sucursales').then(r => r.json()).then(setSucs) }, [])
@@ -59,6 +61,9 @@ export default function VentasAdminPage() {
   }
 
   const total = items.filter(v => !v.anulada).reduce((s, v) => s + v.total_centavos, 0)
+  const totalPaginas = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
+  const pagina = Math.min(page, totalPaginas)
+  const visibles = items.slice((pagina - 1) * PAGE_SIZE, pagina * PAGE_SIZE)
   const inputCls = 'bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-50 text-sm'
 
   return (
@@ -84,23 +89,31 @@ export default function VentasAdminPage() {
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div className="max-h-[62vh] overflow-y-auto">
         <table className="w-full text-sm">
-          <thead className="text-slate-500 text-xs uppercase tracking-wide border-b border-slate-800 text-left">
-            <tr><th className="px-4 py-2.5 w-8"></th><th>Fecha</th><th>Sucursal</th><th>Caja</th><th>Medio</th><th className="text-right">Total</th></tr>
+          <thead className="text-slate-500 text-xs uppercase tracking-wide text-left sticky top-0 bg-slate-900 z-10">
+            <tr className="border-b border-slate-800">
+              <th className="px-4 py-3 w-8"></th>
+              <th className="px-4 py-3 font-medium">Fecha</th>
+              <th className="px-4 py-3 font-medium">Sucursal</th>
+              <th className="px-4 py-3 font-medium">Caja</th>
+              <th className="px-4 py-3 font-medium">Medio</th>
+              <th className="px-4 py-3 font-medium text-right">Total</th>
+            </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
             {cargando && Array.from({ length: 8 }).map((_, i) => (
               <tr key={i}><td className="px-4 py-3" colSpan={6}><Skeleton className="h-4 w-full" /></td></tr>
             ))}
-            {!cargando && items.map(v => (
+            {!cargando && visibles.map(v => (
               <>
-                <tr key={v.id} onClick={() => toggle(v.id)} className={`cursor-pointer hover:bg-slate-800/50 ${v.anulada ? 'opacity-50' : ''}`}>
+                <tr key={v.id} onClick={() => toggle(v.id)} className={`cursor-pointer hover:bg-slate-800/50 transition-colors ${v.anulada ? 'opacity-50' : ''}`}>
                   <td className="px-4 py-2.5 text-slate-600">{exp === v.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</td>
-                  <td className="whitespace-nowrap">{fechaHora(v.created_at)}{v.anulada && <span className="ml-2 text-[10px] bg-red-500/15 text-red-300 px-1.5 py-0.5 rounded">Anulada</span>}</td>
-                  <td className="text-slate-300">{v.sucursal_nombre}</td>
-                  <td className="text-slate-400">{v.caja_nombre}</td>
-                  <td className="text-slate-400">{MEDIO[v.medio_pago] ?? v.medio_pago}</td>
-                  <td className="text-right font-medium tabular-nums">{pesos(v.total_centavos)}</td>
+                  <td className="px-4 py-2.5 whitespace-nowrap text-white">{fechaHora(v.created_at)}{v.anulada && <span className="ml-2 text-[10px] bg-red-500/15 text-red-300 px-1.5 py-0.5 rounded">Anulada</span>}</td>
+                  <td className="px-4 py-2.5 text-slate-300">{v.sucursal_nombre}</td>
+                  <td className="px-4 py-2.5 text-slate-400">{v.caja_nombre}</td>
+                  <td className="px-4 py-2.5 text-slate-400">{MEDIO[v.medio_pago] ?? v.medio_pago}</td>
+                  <td className="px-4 py-2.5 text-right font-medium tabular-nums text-white">{pesos(v.total_centavos)}</td>
                 </tr>
                 {exp === v.id && (
                   <tr key={v.id + '-x'} className="bg-slate-800/30">
@@ -131,6 +144,19 @@ export default function VentasAdminPage() {
             {!cargando && items.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Sin ventas en el período</td></tr>}
           </tbody>
         </table>
+        </div>
+
+        {!cargando && totalPaginas > 1 && (
+          <div className="flex items-center justify-between border-t border-slate-800 px-4 py-3">
+            <span className="text-slate-500 text-xs">Página {pagina} de {totalPaginas} · {items.length} ventas</span>
+            <div className="flex gap-1">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={pagina === 1}
+                className="px-3 py-1 text-xs rounded bg-slate-800 text-slate-300 disabled:opacity-30 hover:bg-slate-700 transition-colors cursor-pointer">‹ Anterior</button>
+              <button onClick={() => setPage(p => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
+                className="px-3 py-1 text-xs rounded bg-slate-800 text-slate-300 disabled:opacity-30 hover:bg-slate-700 transition-colors cursor-pointer">Siguiente ›</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
